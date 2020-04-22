@@ -1,0 +1,29 @@
+<개요>
+일시: 04-22
+참가인원: 총 3 명
+진행 시간: 1시간 20분
+
+<회의 내용 정리>
+
+ - 프로젝트 세부 사항
+  - 다항 회귀를 통한 데이터셋 분석 및 추측
+  - "리그 오브 레전드 상위 티어 게임 지표" 데이터셋 사용
+  - https://www.kaggle.com/bobbyscience/league-of-legends-diamond-ranked-games-10-min
+  - 시나리오는 진행 추이 확인하며 변경
+ 
+ - 다중회귀 구현 참고자료
+ 1: https://gist.github.com/chrisengelsma/108f7ab0a746323beaaf7d6634cf4add
+ 2: https://www.bragitoff.com/2015/09/c-program-for-polynomial-fit-least-squares/
+ 3: https://rosettacode.org/wiki/Polynomial_regression#C.2B.2B
+ 
+ - 예상 타임라인
+  - 참고자료 학습: ~ 04/26 (21:00 회의 예정)
+  - 코드 완성: ~ 05/02
+  - 보고서, ppt 작성: ~ 05/08
+  - 프로젝트 발표 평가: 5/12, 5/14
+  - 팀내 상호 평가: ~5/15
+  
+ - 프로젝트 진행 역할 분배?
+  작업 분리 없이 협업 위주
+  
+ 
