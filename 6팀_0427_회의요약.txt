@@ -1,0 +1,23 @@
+<개요>
+일시: 04-27
+참가인원: 총 3 명
+진행 시간: 시간 분
+
+<회의 내용 정리>
+
+ - 04/22 회의 참고자료 학습 및 공유
+ 
+ - 추가 참고자료, 다중회귀
+	1. https://rosettacode.org/wiki/Multiple_regression#C
+	2. https://github.com/abhishekprog0/PredictingHousingPrices_Regression
+	3. https://helloacm.com/cc-linear-regression-tutorial-using-gradient-descent/
+	
+ - 역할 분담
+  데이터 준비 및 읽기, 회귀 병렬화, 시각화, 보고서, ppt, 발표
+  하나의 기능을 핵심으로 하는 소규모 프로젝트이므로 역할은 분담하되 필요에 따라 협업.
+  
+  노유찬(발표, 시각화), 김기백(병렬화, 보고서), 유지훈(데이터 입력, ppt)
+  
+ - 일정 변경
+  중간 진행상황 공유 : 04/30 16:00
+  프로토타입 완성 : ~ 05/03
