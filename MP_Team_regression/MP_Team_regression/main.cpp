@@ -4,30 +4,57 @@
 #include <numeric>
 #include "DS_definitions.h"
 #include "PolynomialRegression.h"
+#include "MultipleRegression.h"
+#include "MultipleRegressionParallelized.h"
 
 using namespace std;
 
-#define f(x, c) c[0] + x*c[1] + x*x*c[2]
+#define pf(x, c) c[0] + x*c[1] + x*x*c[2] +  x*x*x*c[3]
+#define mf(x,c) c[0] + x[0]*c[1] + x[1]*c[2] + x[2]*c[3]
 
 int main() {
 
-	PolynomialRegression<double> a;
+	PolynomialRegression<double> pr;
+	MultipleRegression<double> mr;
+	MultipleRegressionP<double> mrp;
 
-	vector<double> x(10);
-	iota(x.begin(), x.end(), 0);
-	vector<double> y{0,1,4,9,16,25,36,52,72,100 };
-	int order = 2;
-	vector<double> coeffs;
+	vector<double> x{ 1.47, 1.50, 1.52, 1.55, 1.57, 1.60, 1.63, 1.65, 1.68, 1.70, 1.73, 1.75, 1.78, 1.80, 1.83 };
+	vector<double> y{ 52.21, 53.12, 54.48, 55.84, 57.20, 58.57, 59.93, 61.29, 63.11, 64.47, 66.28, 68.10, 69.92, 72.19, 74.46 };
+	vector<vector<double>> xx;
+	int order = 3;
+	vector<double> coeffs(order,0);
+	vector<double> coeffsP(order,0);
+	
 
-	a.fitIt(x, y, order, coeffs);
+	for (int i = 0; i < 15;i++) {
+		double xi = x[i];
+		vector<double> elem{xi, xi*xi, xi*xi*xi};	//다중 회귀 테스트를 위한 다항회귀 입력
+		xx.push_back(elem);
+	}
 
-	for (double i : coeffs)
+	//pr.fitIt(x, y, order, coeffs);	//다항 회귀
+	mr.fitIt(xx, y, coeffs);				//다중 회귀
+
+	for (double i : coeffs)		//상수항부터 계수
 		printf("%f ",i);
 	printf("\n");
 
-	for (double i : x)
-		printf("%.2f %.2f %f\n", i,y[i], f(i, coeffs));
+	mrp.fitIt(xx, y, coeffsP);				//다중 회귀
 
+	for (double i : coeffsP)		//상수항부터 계수
+		printf("%f ", i);
+	printf("\n");
+
+	//입력값과 수식값 비교
+	for (int i = 0; i < 11; ++i) {
+		printf("x(");
+		for (double d : xx[i])
+			printf("%.2f ", d);
+		printf(") ");
+
+		printf("y(%.2f) f(x)=%f (p)f(x)=%f\n", y[i], mf(xx[i], coeffs), mf(xx[i], coeffsP));
+
+	}
 	getchar();
 	return 0;
 }

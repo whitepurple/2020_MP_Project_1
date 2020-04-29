@@ -1,17 +1,9 @@
-#ifndef _POLYNOMIAL_REGRESSION_H
-#define _POLYNOMIAL_REGRESSION_H  __POLYNOMIAL_REGRESSION_H
-/**
-* PURPOSE:
-*
-*  Polynomial Regression aims to fit a non-linear relationship to a set of
-*  points. It approximates this by solving a series of linear equations using
-*  a least-squares approach.
-*
-*  We can model the expected value y as an nth degree polynomial, yielding
-*  the general polynomial regression model:
-*
-*  y = a0 + a1 * x + a2 * x^2 + ... + an * x^n
-* @author Chris Engelsma
+#ifndef _MULTIPLE_REGRESSION_H
+#define _MULTIPLE_REGRESSION_H  __MULTIPLE_REGRESSION_H
+/*
+*  y = a0 + a1 * A + a2 * B + ... + an * N
+
+	Ba = Y
 */
 #include<vector>
 #include<stdlib.h>
@@ -49,36 +41,41 @@ bool MultipleRegression<TYPE>::fitIt(
 		return false;
 	}
 
-	size_t N = x.size();
-	int n = x[0].size();
-	int np1 = n + 1;
-	int np2 = n + 2;
-	int tnp1 = 2 * n + 1;
+	size_t N = x.size();	//입력 데이터 수
+	int n = (int)(x[0].size());	//column 수
+	int np1 = n + 1;		//n plus 1
+	int np2 = n + 2;	//n plus 2
 
-	// X = vector that stores values of sigma(xi^2n)
-	std::vector<TYPE> X(tnp1);
-	for (int i = 0; i < tnp1; ++i) {
-		X[i] = 0;
-		for (int j = 0; j < N; ++j)
-			X[i] += (TYPE)x[j][i];
-	}
+	std::vector<std::vector<TYPE> > X(np1, std::vector<TYPE>(np1, 0));
+	//0차, 1차 sigma
+	X[0][0] = (double)N;
+	for (int i = 1; i < np1; i++)
+		for (int k = 0; k < N; ++k) 
+			X[0][i] += (TYPE)x[k][i - 1];
 
-	// a = vector to store final coefficients.	//a
+	//2차 sigma
+	for (int i = 0; i < n; ++i) 
+		for (int j = i; j < n; ++j) 
+			for (int k = 0; k < N; ++k) 
+					X[i+1][(j+1)] += (TYPE)(x[k][i] * x[k][j]);
+
+	// a = vector to store final coefficients.
 	std::vector<TYPE> a(np1);
 
-	// B = normal augmented matrix that stores the equations.		// A
+	// B = normal augmented matrix that stores the equations.
 	std::vector<std::vector<TYPE> > B(np1, std::vector<TYPE>(np2, 0));
 
-	for (int i = 0; i <= n; ++i)
-		for (int j = 0; j <= n; ++j)
-			B[i][j] = X[i + j];
-
-	// Y = vector to store values of sigma(xi^n * yi)	//b
-	std::vector<TYPE> Y(np1);
 	for (int i = 0; i < np1; ++i) {
-		Y[i] = (TYPE)0;
+		for (int j = 0; j < np1; ++j) {
+			B[i][j] = (i <= j) ? X[i][j]: X[j][i];
+		}
+	}
+
+	// Y = vector to store values of sigma(xi * yi)
+	std::vector<TYPE> Y(np1,0);
+	for (int i = 0; i < np1; ++i) {
 		for (int j = 0; j < N; ++j) {
-			Y[i] += (TYPE)pow(x[j], i)*y[j];
+			Y[i] += (TYPE)((i==0)?1:x[j][i-1])*y[j];
 		}
 	}
 
@@ -117,7 +114,7 @@ bool MultipleRegression<TYPE>::fitIt(
 		a[i] /= B[i][i];                  // (3)
 	}
 
-	coeffs.resize(a.size());
+	coeffs.resize(a.size());		//계수 출력
 	for (size_t i = 0; i < a.size(); ++i)
 		coeffs[i] = a[i];
 
