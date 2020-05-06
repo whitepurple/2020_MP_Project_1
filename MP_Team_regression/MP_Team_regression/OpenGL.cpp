@@ -64,7 +64,7 @@ void dataVisualization() {
 	// 3) Title
 	std::string title = "All Data";
 	glColor3f(0.0f, 0.0f, 0.0f);
-	glRasterPos3f(0.70f, 0.95f, 0.0f);
+	glRasterPos3f(0.60f, 0.95f, 0.0f);
 	for (auto c : title) {
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
 	}
@@ -132,7 +132,7 @@ void drawTotalPoints() {
 		float color[3] = { colors[i][0], colors[i][1], colors[i][2] };
 
 		// Print Labels
-		drawLabels(0.7f, y, i, color);
+		drawLabels(0.6f, y, i, color);
 		y -= 0.05f;
 	}
 	
@@ -164,7 +164,7 @@ void drawEachPoints() {
 
 	// Draw points of data
 	for (int i = 0; i < 3; i++) color[i] = (rand() % 100) / 100.0;
-	drawLabels(0.70f, 0.95f, currMenuOper, color);
+	drawLabels(0.60f, 0.95f, currMenuOper, color);
 	glBegin(GL_POINTS);
 	for (auto data : eachDataInfo[currMenuOper]) {
 		glColor3f(color[0], color[1], color[2]);
@@ -191,7 +191,7 @@ void drawLabels(float x, float y, int index, float* color) {	// category index &
 	std::string label = xLabel[category[index]];
 
 	glColor3f(color[0], color[1], color[2]);
-	glRasterPos3f(x, y, 0.0f);
+	glRasterPos3f(x, y, -0.1f);
 	for (auto c : label) {
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
 	}
@@ -301,7 +301,7 @@ std::vector<std::vector<double>> vectorNormalization(std::vector<std::vector<dou
 // Take category information to OpenGL
 void getCategory(int* c, int size) { 
 	for (int i = 0; i < size; i++) {
-		category.push_back(c[i]);
+		category.push_back(c[i] - 1);
 	}
 }
 
