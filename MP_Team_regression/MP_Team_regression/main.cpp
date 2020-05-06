@@ -7,9 +7,16 @@
 #include "MultipleRegression.h"
 #include "MultipleRegressionParallelized.h"
 #include "CSVReader.h"
+#include "OpenGL.h"
 
 #define numRows 9880
 #define numStats 11 // number of game stats from dataset
+
+/* OpenGL */
+std::vector<Point> dataInfo;
+std::vector<std::vector<Point>> eachDataInfo;
+std::vector<int> category;
+int currMenuOper;
 
 using namespace std;
 
@@ -30,7 +37,8 @@ void pressAny() {
 	getchar();
 }
 
-int main() {
+int main(int argc, char** argv) {
+
 	MultipleRegression<double> mr;
 	MultipleRegressionP<double> mrp;
 
@@ -81,6 +89,11 @@ int main() {
 		dataX.push_back(tmp);
 		dataY.push_back(stats[selectY - 1]);
 	}
+
+	// Input Data Visualization
+	inputData(dataX, dataY);
+	getCategory(selectX, inptCnt);
+	initGL(&argc, argv);
 
 	// Multiple Regression
 	printf("\n[ Multiple Regression on Progress... ]\n");

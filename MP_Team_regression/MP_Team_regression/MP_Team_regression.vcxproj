@@ -122,11 +122,13 @@
     <ClInclude Include="DS_timer.h" />
     <ClInclude Include="MultipleRegression.h" />
     <ClInclude Include="MultipleRegressionParallelized.h" />
+    <ClInclude Include="OpenGL.h" />
     <ClInclude Include="PolynomialRegression.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DS_timer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="OpenGL.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

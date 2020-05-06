@@ -33,12 +33,18 @@
     <ClInclude Include="CSVReader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="OpenGL.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="DS_timer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGL.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

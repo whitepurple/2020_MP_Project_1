@@ -41,10 +41,10 @@ bool MultipleRegression<TYPE>::fitIt(
 		return false;
 	}
 
-	size_t N = x.size();	//입력 데이터 수
+	size_t N = x.size();		//입력 데이터 수
 	int n = (int)(x[0].size());	//column 수
-	int np1 = n + 1;		//n plus 1
-	int np2 = n + 2;	//n plus 2
+	int np1 = n + 1;			//n plus 1
+	int np2 = n + 2;			//n plus 2
 
 	std::vector<std::vector<TYPE> > X(np1, std::vector<TYPE>(np1, 0));
 	//0차, 1차 sigma
@@ -107,14 +107,14 @@ bool MultipleRegression<TYPE>::fitIt(
 	// (2) Subtract all lhs values except the target coefficient.
 	// (3) Divide rhs by coefficient of variable being calculated.
 	for (int i = nm1; i >= 0; --i) {
-		a[i] = B[i][n];                   // (1)
+		a[i] = B[i][n];							// (1)
 		for (int j = 0; j < n; ++j)
 			if (j != i)
-				a[i] -= B[i][j] * a[j];       // (2)
-		a[i] /= B[i][i];                  // (3)
+				a[i] -= B[i][j] * a[j];			// (2)
+		a[i] /= B[i][i];						// (3)
 	}
 
-	coeffs.resize(a.size());		//계수 출력
+	coeffs.resize(a.size());					//계수 출력
 	for (size_t i = 0; i < a.size(); ++i)
 		coeffs[i] = a[i];
 
