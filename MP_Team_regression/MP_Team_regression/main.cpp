@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <numeric>
 #include "PolynomialRegression.h"
-#include "MultipleRegression.h"
-#include "MultipleRegressionParallelized.h"
 #include "CSVReader.h"
 #include "OpenGL.h"
 #include "DS_definitions.h"
 #include "DS_timer.h"
+#include "MultipleRegression.h"
+#include "MultipleRegressionParallelized.h"
 
 #define ABS(X) ((X) < 0 ? -(X) : (X))
 #define EPSILON 0.000001
