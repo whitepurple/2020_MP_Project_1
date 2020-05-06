@@ -102,7 +102,7 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	int nm1 = n - 1;
 
 	// Pivotisation of the B matrix.	//유사버블정렬
-	for (int i = 0; i < n; ++i) {
+	for (int i = 0; i < np2; ++i) {
 		int first = i % 2;
 		#pragma omp parallel for default(none),shared(B,first)
 		for (int k = first; k < n-1; k+=2)
@@ -110,15 +110,22 @@ bool MultipleRegressionP<TYPE>::fitIt(
 				B[k].swap(B[k+1]);
 	}
 
+	for (int i = 0; i < np1; ++i) {
+		for (int j = 0; j < np1; ++j) {
+			printf("%f ", B[i][j*cache]);
+		}
+		printf("\n");
+	}
+
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
 	for (int i = 0; i < nm1; ++i)
-		#pragma omp parallel for schedule(dynamic)
+		//#pragma omp parallel for schedule(dynamic)
 		for (int k = i + 1; k < n; ++k) {
-			TYPE t = B[k][i*cache] / B[i][i*cache];
+			//TYPE t = B[k][i*cache] / B[i][i*cache];
 			for (int j = 0; j <= n; ++j)
-				B[k][j*cache] -= t * B[i][j*cache];         // (1)
+				B[k][j*cache] -= (B[i][j*cache] *B[k][i*cache] ) / B[i][i*cache];         // (1)
 		}
 	// Back substitution.
 	// (1) Set the variable as the rhs of last equation

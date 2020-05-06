@@ -47,6 +47,13 @@ bool MultipleRegression<TYPE>::fitIt(
 	int np2 = n + 2;			//n plus 2
 
 	std::vector<std::vector<TYPE> > X(np1, std::vector<TYPE>(np1, 0));
+	// a = vector to store final coefficients.
+	std::vector<TYPE> a(np1);
+	// Y = vector to store values of sigma(xi * yi)
+	std::vector<TYPE> Y(np1, 0);
+	// B = normal augmented matrix that stores the equations.
+	std::vector<std::vector<TYPE> > B(np1, std::vector<TYPE>(np2, 0));
+
 	//0Â÷, 1Â÷ sigma
 	X[0][0] = (double)N;
 	for (int i = 1; i < np1; i++)
@@ -59,23 +66,15 @@ bool MultipleRegression<TYPE>::fitIt(
 			for (int k = 0; k < N; ++k) 
 					X[i+1][(j+1)] += (TYPE)(x[k][i] * x[k][j]);
 
-	// a = vector to store final coefficients.
-	std::vector<TYPE> a(np1);
-
-	// B = normal augmented matrix that stores the equations.
-	std::vector<std::vector<TYPE> > B(np1, std::vector<TYPE>(np2, 0));
+	for (int i = 0; i < np1; ++i) {
+		for (int j = 0; j < N; ++j) {
+			Y[i] += (TYPE)((i==0)?1:x[j][i-1])*y[j];
+		}
+	}
 
 	for (int i = 0; i < np1; ++i) {
 		for (int j = 0; j < np1; ++j) {
 			B[i][j] = (i <= j) ? X[i][j]: X[j][i];
-		}
-	}
-
-	// Y = vector to store values of sigma(xi * yi)
-	std::vector<TYPE> Y(np1,0);
-	for (int i = 0; i < np1; ++i) {
-		for (int j = 0; j < N; ++j) {
-			Y[i] += (TYPE)((i==0)?1:x[j][i-1])*y[j];
 		}
 	}
 
@@ -99,24 +98,16 @@ bool MultipleRegression<TYPE>::fitIt(
 		printf("\n");
 	}
 
-	printf("\n##########   Gaussian elimination   ##########\n");
-
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
+
 	for (int i = 0; i < nm1; ++i)
 		for (int k = i + 1; k < n; ++k) {
-			TYPE t = B[k][i] / B[i][i]);
+			//TYPE t = B[k][i] / B[i][i];
 			for (int j = 0; j <= n; ++j)
-				B[k][j] -= t * B[i][j]);         // (1)
+				B[k][j] -= (B[i][j] * B[k][i]) / B[i][i];         // (1)
 		}
-
-	for (int i = 0; i < np1; ++i) {
-		for (int j = 0; j < np1; ++j) {
-			printf("%f ", B[i][j]);
-		}
-		printf("\n");
-	}
 
 	// Back substitution.
 	// (1) Set the variable as the rhs of last equation
