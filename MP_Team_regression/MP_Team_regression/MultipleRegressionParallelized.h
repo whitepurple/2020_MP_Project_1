@@ -101,14 +101,11 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	n += 1;
 	int nm1 = n - 1;
 
-	// Pivotisation of the B matrix.	//유사버블정렬
-	for (int i = 0; i < np2; ++i) {
-		int first = i % 2;
-		#pragma omp parallel for default(none),shared(B,first)
-		for (int k = first; k < n-1; k+=2)
-			if (B[k][i*cache] < B[k+1][i*cache])
-				B[k].swap(B[k+1]);
-	}
+	// Pivotisation of the B matrix.
+	for (int i = 0; i < n; ++i)
+		for (int k = i + 1; k < n; ++k)
+			if (B[i][i*cache] < B[k][i*cache])
+				B[i].swap(B[k]);
 
 	for (int i = 0; i < np1; ++i) {
 		for (int j = 0; j < np1; ++j) {
