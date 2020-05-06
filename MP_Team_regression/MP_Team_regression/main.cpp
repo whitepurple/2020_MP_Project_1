@@ -9,8 +9,9 @@
 #include "CSVReader.h"
 #include "OpenGL.h"
 
-#define numRows 9880
-#define numStats 11 // number of game stats from dataset
+#define numRows			9880
+#define numRowsVerify	1880	// number of rows to use as a verifier
+#define numStats		11		// number of game stats from dataset
 
 /* OpenGL */
 std::vector<Point> dataInfo;
@@ -76,8 +77,9 @@ int main(int argc, char** argv) {
 	} pressAny();
 
 
-	vector<vector<double>>	dataX{};	// dataX: game stats
-	vector<double>			dataY{};	// dataY: blueWins itself
+	int counter = 0;
+	vector<vector<double>>	dataX{}, verifyX{};	// dataX: game stats as X	verifyX: X factor data for verifying
+	vector<double>			dataY{}, verifyY{};	// dataY: Y factor itself	verifyY: ,,, data for verifying
 	// blueWins, blueWardsPlaced, blueWardsDestroyed, blueTowersDestroyed, blueKills, blueDeaths, blueAssists, blueTotalExperience, blueTotalMinionsKilled, blueExperienceDiff, blueGoldDiff;
 	double stats[numStats]{};
 	while (in.read_row(stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8], stats[9], stats[10])) {
@@ -86,8 +88,14 @@ int main(int argc, char** argv) {
 		for (int i = 0; i < inptCnt; ++i)
 			tmp.push_back(stats[selectX[i] - 1]);
 		
-		dataX.push_back(tmp);
-		dataY.push_back(stats[selectY - 1]);
+		if (counter++ < numRows - numRowsVerify) {
+			dataX.push_back(tmp);
+			dataY.push_back(stats[selectY - 1]);
+		}
+		else {
+			verifyX.push_back(tmp);
+			verifyY.push_back(stats[selectY - 1]);
+		}
 	}
 
 	// Input Data Visualization
@@ -115,8 +123,8 @@ int main(int argc, char** argv) {
 	printf("\n\n[ Verifying with Dataset ]\n"); 
 	printf("How many dataset do you want to verify? : ");
 	while (~scanf("%d", &inpt)) {
-		if (inpt > 0 && inpt < numRows) break;
-		else if (inpt >= numRows) printf("I'm afraid there's only 9880 rows in dataset...\n");
+		if (inpt > 0 && inpt < numRowsVerify) break;
+		else if (inpt >= numRowsVerify) printf("I'm afraid there's only %d rows for verifying...\n", numRowsVerify);
 		else printf("please select a proper number\n");
 	} pressAny();
 
@@ -127,11 +135,11 @@ int main(int argc, char** argv) {
 
 	for (int i = 0; i < inpt; ++i) {
 		printf("X[%3d]{", i);
-		for (double d : dataX[i])
+		for (double d : verifyX[i])
 			printf("%6.2f ", d);
 		printf("}");
 
-		printf(" | Y[%3d](%8.2f) | f(x)=%12.3f (p)f(x)=%12.3f\n", i, dataY[i], calMF(dataX[i], coeffs), calMF(dataX[i], coeffsP));
+		printf(" | Y[%3d](%8.2f) | f(x)=%12.3f (p)f(x)=%12.3f\n", i, verifyY[i], calMF(verifyX[i], coeffs), calMF(verifyX[i], coeffsP));
 	}
 
 	pressAny();
