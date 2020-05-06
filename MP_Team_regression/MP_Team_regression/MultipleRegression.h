@@ -106,9 +106,9 @@ bool MultipleRegression<TYPE>::fitIt(
 	//     or eliminate the variable.
 	for (int i = 0; i < nm1; ++i)
 		for (int k = i + 1; k < n; ++k) {
-			TYPE t = (TYPE)((long double)B[k][i] / (long double)B[i][i]);
+			TYPE t = B[k][i] / B[i][i]);
 			for (int j = 0; j <= n; ++j)
-				B[k][j] -= (TYPE)((long double)t * (long double)B[i][j]);         // (1)
+				B[k][j] -= t * B[i][j]);         // (1)
 		}
 
 	for (int i = 0; i < np1; ++i) {
