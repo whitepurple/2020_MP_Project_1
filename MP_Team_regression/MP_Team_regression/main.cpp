@@ -11,7 +11,7 @@
 
 #define numRows			9880
 #define numRowsVerify	1880	// number of rows to use as a verifier
-#define numStats		11		// number of game stats from dataset
+#define numStats		31		// number of game stats from dataset
 
 /* OpenGL */
 std::vector<Point> dataInfo;
@@ -25,7 +25,7 @@ using namespace std;
 double calMF(vector<double> &x, vector<double> &coeff) {
 	double ret = coeff[0];
 	for (int i = 0; i < x.size(); ++i) {
-		ret += x[i] * coeff[i + 1];
+		ret += x[i] * coeff[i + (int)1];
 	}
 	return ret;
 }
@@ -52,12 +52,21 @@ int main(int argc, char** argv) {
 	// CSV Parsing from dataset.csv
 	// CSVReader from open source project, dataset from kaggle data forum
 	io::CSVReader<numStats> in("dataset.csv");		// 9880 rows, 40 columns in total. 4930 rows when blueWins == 1
-	in.read_header(io::ignore_extra_column, "blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueTowersDestroyed",
-		"blueKills", "blueDeaths", "blueAssists", "blueTotalExperience", "blueTotalMinionsKilled", "blueExperienceDiff", "blueGoldDiff");
+	in.read_header(io::ignore_extra_column, 
+			"blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists", 
+			"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+			"blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff", "blueCSPerMin", "blueGoldPerMin", 
+						"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists", 
+			"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redAvgLevel",
+			"redTotalJungleMinionsKilled", "redCSPerMin");
 
 	// User input
-	string statStr[numStats]{ "blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueTowersDestroyed",
-		"blueKills", "blueDeaths", "blueAssists", "blueTotalExperience", "blueTotalMinionsKilled", "blueExperienceDiff", "blueGoldDiff" };
+	string statStr[numStats]{ "blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
+			"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+			"blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff", "blueCSPerMin", "blueGoldPerMin",
+						"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
+			"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redAvgLevel",
+			"redTotalJungleMinionsKilled", "redCSPerMin"};
 	printf("[Available game stats for calculation]\n");
 	for (int i = 0; i < numStats; ++i)
 		printf("[%2d] %-23s\n", i + 1, statStr[i].c_str());
@@ -82,7 +91,10 @@ int main(int argc, char** argv) {
 	vector<double>			dataY{}, verifyY{};	// dataY: Y factor itself	verifyY: ,,, data for verifying
 	// blueWins, blueWardsPlaced, blueWardsDestroyed, blueTowersDestroyed, blueKills, blueDeaths, blueAssists, blueTotalExperience, blueTotalMinionsKilled, blueExperienceDiff, blueGoldDiff;
 	double stats[numStats]{};
-	while (in.read_row(stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8], stats[9], stats[10])) {
+	while (in.read_row(stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8], stats[9],
+		stats[10], stats[11], stats[12], stats[13], stats[14], stats[15], stats[16], stats[17], stats[18], stats[19], 
+		stats[20], stats[21], stats[22], stats[23], stats[24], stats[25], stats[26], stats[27], stats[28], stats[29], 
+		stats[30])) {
 		// Setting independent variables set and result set
 		vector<double> tmp;
 		for (int i = 0; i < inptCnt; ++i)
@@ -108,7 +120,7 @@ int main(int argc, char** argv) {
 	mr.fitIt(dataX, dataY, coeffs);
 	printf("Completed function: f(x) = %f", coeffs[0]);
 	for (int i = 0; i < inptCnt; ++i)
-		printf(" + %f * x%d", coeffs[i + 1], i);
+		printf(" + %f * x%d", coeffs[i + (int)1], i);
 	printf("\n");
 
 	// Multiple Regression Parallelized
@@ -116,7 +128,7 @@ int main(int argc, char** argv) {
 	mrp.fitIt(dataX, dataY, coeffsP);
 	printf("Completed function: f(x) = %f", coeffsP[0]);
 	for (int i = 0; i < inptCnt; ++i)
-		printf(" + %f * x%d", coeffsP[i + 1], i);
+		printf(" + %f * x%d", coeffsP[i + (int)1], i);
 	printf("\n\n");
 
 	// Verifying results with real dataset

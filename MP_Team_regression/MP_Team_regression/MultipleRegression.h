@@ -92,15 +92,31 @@ bool MultipleRegression<TYPE>::fitIt(
 			if (B[i][i] < B[k][i])
 				B[i].swap(B[k]);
 
+	for (int i = 0; i < np1; ++i) {
+		for (int j = 0; j < np1; ++j) {
+			printf("%f ", B[i][j]);
+		}
+		printf("\n");
+	}
+
+	printf("\n##########   Gaussian elimination   ##########\n");
+
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
 	for (int i = 0; i < nm1; ++i)
 		for (int k = i + 1; k < n; ++k) {
-			TYPE t = B[k][i] / B[i][i];
+			TYPE t = (TYPE)((long double)B[k][i] / (long double)B[i][i]);
 			for (int j = 0; j <= n; ++j)
-				B[k][j] -= t * B[i][j];         // (1)
+				B[k][j] -= (TYPE)((long double)t * (long double)B[i][j]);         // (1)
 		}
+
+	for (int i = 0; i < np1; ++i) {
+		for (int j = 0; j < np1; ++j) {
+			printf("%f ", B[i][j]);
+		}
+		printf("\n");
+	}
 
 	// Back substitution.
 	// (1) Set the variable as the rhs of last equation

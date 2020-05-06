@@ -174,18 +174,13 @@ void drawEachPoints() {
 }
 
 void drawLabels(float x, float y, int index, float* color) {	// category index & color information
-	std::string xLabel[11] = {
-		"blueWins",
-		"blueWardsPlaced",
-		"blueWardsDestroyed",
-		"blueTowersDestroyed",
-		"blueKills",
-		"blueDeaths",
-		"blueAssists",
-		"blueTotalExperience",
-		"blueTotalMinionsKilled",
-		"blueExperienceDiff",
-		"blueGoldDiff"
+	std::string xLabel[31] = {
+		"blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
+			"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+			"blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff", "blueCSPerMin", "blueGoldPerMin",
+						"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
+			"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redAvgLevel",
+			"redTotalJungleMinionsKilled", "redCSPerMin"
 	};
 
 	std::string label = xLabel[category[index]];
@@ -307,18 +302,13 @@ void getCategory(int* c, int size) {
 
 /* Menu */
 void menu() {
-	std::string xLabel[11] = {
-		"blueWins",
-		"blueWardsPlaced",
-		"blueWardsDestroyed",
-		"blueTowersDestroyed",
-		"blueKills",
-		"blueDeaths",
-		"blueAssists",
-		"blueTotalExperience",
-		"blueTotalMinionsKilled",
-		"blueExperienceDiff",
-		"blueGoldDiff"
+	std::string xLabel[31] = {
+		"blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
+			"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+			"blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff", "blueCSPerMin", "blueGoldPerMin",
+						"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
+			"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redAvgLevel",
+			"redTotalJungleMinionsKilled", "redCSPerMin"
 	};
 
 	int i;

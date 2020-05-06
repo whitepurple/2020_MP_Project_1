@@ -9,7 +9,7 @@
 #include<stdlib.h>
 #include <omp.h>
 
-#define cache 32
+#define cache (int)32
 #define NUMTHREADS 8
 
 template <class TYPE>
