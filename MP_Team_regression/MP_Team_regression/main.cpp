@@ -9,7 +9,6 @@
 #include "DS_timer.h"
 #include "MultipleRegression.h"
 #include "MultipleRegressionParallelized.h"
-
 #define ABS(X) ((X) < 0 ? -(X) : (X))
 #define EPSILON 0.000001
 
@@ -131,12 +130,9 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	// Input Data Visualization
-	if (inptCnt != testnum) {
-		inputData(dataX, dataY);
-		getCategory(selectX, inptCnt);
-		initGL(&argc, argv);
-	}
+	inputData(dataX, dataY);
+	getCategory(selectX, inptCnt);
+	initGL(&argc, argv);
 
 	// Multiple Regression
 	printf("\n[ Multiple Regression on Progress... ]\n");
