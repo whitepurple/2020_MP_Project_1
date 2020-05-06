@@ -91,13 +91,6 @@ bool MultipleRegression<TYPE>::fitIt(
 			if (B[i][i] < B[k][i])
 				B[i].swap(B[k]);
 
-	for (int i = 0; i < np1; ++i) {
-		for (int j = 0; j < np1; ++j) {
-			printf("%f ", B[i][j]);
-		}
-		printf("\n");
-	}
-
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
@@ -121,8 +114,8 @@ bool MultipleRegression<TYPE>::fitIt(
 		a[i] /= B[i][i];						// (3)
 	}
 
-	coeffs.resize(a.size());					//계수 출력
-	for (size_t i = 0; i < a.size(); ++i)
+	coeffs.resize(np1);					//계수 출력
+	for (int i = 0; i < np1; ++i)
 		coeffs[i] = a[i];
 
 	return true;

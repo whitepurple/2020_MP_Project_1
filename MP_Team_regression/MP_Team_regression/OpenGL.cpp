@@ -174,13 +174,16 @@ void drawEachPoints() {
 }
 
 void drawLabels(float x, float y, int index, float* color) {	// category index & color information
-	std::string xLabel[31] = {
-		"blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
-			"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
-			"blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff", "blueCSPerMin", "blueGoldPerMin",
-						"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
-			"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redAvgLevel",
-			"redTotalJungleMinionsKilled", "redCSPerMin"
+	std::string xLabel[40] = {
+		"blueWins",
+		"blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
+		"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+		"blueTotalExperience", "blueTotalMinionsKilled", "blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff",
+		"blueCSPerMin", "blueGoldPerMin",
+		"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
+		"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redTotalGold", "redAvgLevel",
+		"redTotalExperience", "redTotalMinionsKilled", "redTotalJungleMinionsKilled", "redGoldDiff", "redExperienceDiff",
+		"redCSPerMin", "redGoldPerMin"
 	};
 
 	std::string label = xLabel[category[index]];
@@ -302,13 +305,16 @@ void getCategory(int* c, int size) {
 
 /* Menu */
 void menu() {
-	std::string xLabel[31] = {
-		"blueWins", "blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
-			"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
-			"blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff", "blueCSPerMin", "blueGoldPerMin",
-						"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
-			"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redAvgLevel",
-			"redTotalJungleMinionsKilled", "redCSPerMin"
+	std::string xLabel[40] = {
+		"blueWins",
+		"blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
+		"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+		"blueTotalExperience", "blueTotalMinionsKilled", "blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff",
+		"blueCSPerMin", "blueGoldPerMin",
+		"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
+		"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redTotalGold", "redAvgLevel",
+		"redTotalExperience", "redTotalMinionsKilled", "redTotalJungleMinionsKilled", "redGoldDiff", "redExperienceDiff",
+		"redCSPerMin", "redGoldPerMin"
 	};
 
 	int i;

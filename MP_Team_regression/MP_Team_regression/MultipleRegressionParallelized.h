@@ -9,7 +9,7 @@
 #include<stdlib.h>
 #include <omp.h>
 
-#define cache (int)32
+#define cache 8
 #define NUMTHREADS 8
 
 template <class TYPE>
@@ -62,68 +62,58 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	X[0][0] = (TYPE)N;
 	#pragma omp parallel num_threads(NUMTHREADS)
 	{
-		#pragma omp for schedule(dynamic) nowait
+		#pragma omp for schedule(static, 3) nowait
 		for (int i = 1; i < np1; i++)
 			for (int k = 0; k < N; ++k)
 				X[0][i*cache] += (TYPE)x[k][i - 1];
 
+		#pragma omp for schedule(static, 3) nowait
+		for (int i = 0; i < np1; ++i) {
+			for (int j = 0; j < N; ++j) {
+				Y[i * cache] += (TYPE)((i == 0) ? 1 : x[j][i - 1]) * y[j];
+			}
+		}
+
 		//2차 sigma
-		#pragma omp for schedule(dynamic) nowait
+		#pragma omp for
 		for (int i = 0; i < n; ++i)
 			for (int j = i; j < n; ++j)
 				for (int k = 0; k < N; ++k)
 					X[i + 1][(j + 1)*cache] += (TYPE)(x[k][i] * x[k][j]);
 
-		#pragma omp for schedule(dynamic) nowait
-		for (int i = 0; i < np1; ++i) {
-			for (int j = 0; j < N; ++j) {
-				Y[i*cache] += (TYPE)((i == 0) ? 1 : x[j][i - 1])*y[j];
-			}
-		}
-
-	}
-
-	#pragma omp parallel num_threads(NUMTHREADS)
-	{
-		#pragma omp for schedule(dynamic) nowait
+		#pragma omp for
 		for (int i = 0; i < np1; ++i) {
 			for (int j = 0; j < np1; ++j) {
-				B[i][j*cache] = (i <= j) ? X[i][j*cache] : X[j][i*cache];
+				B[i][j * cache] = (i <= j) ? X[i][j * cache] : X[j][i * cache];
 			}
+			// Load values of Y as last column of B
+			B[i][np1 * cache] = Y[i * cache];
 		}
-
-		// Load values of Y as last column of B
-		#pragma omp for schedule(dynamic) nowait
-		for (int i = 0; i <= n; ++i)
-			B[i][np1*cache] = Y[i*cache];
 	}
 
 	n += 1;
 	int nm1 = n - 1;
 
+	TYPE* tmp = NULL;
+
 	// Pivotisation of the B matrix.
 	for (int i = 0; i < n; ++i)
 		for (int k = i + 1; k < n; ++k)
-			if (B[i][i*cache] < B[k][i*cache])
+			if (B[i][i * cache] < B[k][i * cache]) {
 				B[i].swap(B[k]);
-
-	for (int i = 0; i < np1; ++i) {
-		for (int j = 0; j < np1; ++j) {
-			printf("%f ", B[i][j*cache]);
-		}
-		printf("\n");
-	}
+			}
 
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
-	for (int i = 0; i < nm1; ++i)
-		//#pragma omp parallel for schedule(dynamic)
+	for (int i = 0; i < nm1; ++i) {
+		TYPE bii = B[i][i * cache];
+		#pragma omp parallel for
 		for (int k = i + 1; k < n; ++k) {
-			//TYPE t = B[k][i*cache] / B[i][i*cache];
 			for (int j = 0; j <= n; ++j)
-				B[k][j*cache] -= (B[i][j*cache] *B[k][i*cache] ) / B[i][i*cache];         // (1)
+				B[k][j * cache] -= (B[i][j * cache] * B[k][i * cache]) / bii;         // (1)
 		}
+	}
 	// Back substitution.
 	// (1) Set the variable as the rhs of last equation
 	// (2) Subtract all lhs values except the target coefficient.
@@ -131,7 +121,7 @@ bool MultipleRegressionP<TYPE>::fitIt(
 
 	for (int i = nm1; i >= 0; --i) {
 		TYPE reduc = B[i][n*cache];                   // (1)
-		#pragma omp parallel for reduction(-:reduc) schedule(dynamic)
+		#pragma omp parallel for reduction(-:reduc) 
 		for (int j = 0; j < n; ++j)
 			if (j != i)
 				reduc -= B[i][j*cache] * a[j*cache];       // (2)
@@ -139,7 +129,8 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	}
 
 	coeffs.resize(np1);		//계수 출력
-	for (size_t i = 0; i < np1; ++i)
+	#pragma omp parallel for
+	for (int i = 0; i < np1; ++i)
 		coeffs[i] = a[i*cache];
 
 	return true;
