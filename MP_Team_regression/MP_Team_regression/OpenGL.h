@@ -24,9 +24,9 @@ private:
 
 public:
 	Point();
-	Point(int _category, 
-		  int _index,
-		  std::pair<float, float> _coordinate);
+	Point(int _category,
+		int _index,
+		std::pair<float, float> _coordinate);
 	~Point();
 
 	// Getter

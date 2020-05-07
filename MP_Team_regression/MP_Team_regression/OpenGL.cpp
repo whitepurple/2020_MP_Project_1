@@ -106,7 +106,7 @@ void drawCoordinateSystem() {
 
 	// X-coord
 	glBegin(GL_LINE_LOOP);
-	glVertex3f(0.95, -0.95, 0.0);			
+	glVertex3f(0.95, -0.95, 0.0);
 	glVertex3f(-0.95, -0.95, 0.0);
 	glEnd();
 
@@ -115,13 +115,13 @@ void drawCoordinateSystem() {
 	glVertex3f(-0.95, 0.95, 0.0);
 	glVertex3f(-0.95, -0.95, 0.0);
 	glEnd();
-	
+
 }
 
 void drawTotalPoints() {
 	// Randomize
 	srand((unsigned)time(NULL));
-	
+
 	// Size of Point
 	glPointSize(4.0f);
 
@@ -145,16 +145,16 @@ void drawTotalPoints() {
 		drawLabels(0.6f, y, i, color, 1);
 		y -= 0.05f;
 	}
-	
+
 	// Draw points of data
 	glBegin(GL_POINTS);
 	for (auto data : dataInfo) {
-		if (curCategory < data.getCategory()) 
+		if (curCategory < data.getCategory())
 			curCategory++;
 
 		glColor3f(
-			colors[curCategory][0], 
-			colors[curCategory][1], 
+			colors[curCategory][0],
+			colors[curCategory][1],
 			colors[curCategory][2]
 		);
 		glVertex3f(data.getX(), data.getY(), 0.0);
@@ -170,7 +170,7 @@ void drawEachPoints() {
 	glPointSize(4.0f);
 
 	// Label
-	float color[3] = { 0.0, };		
+	float color[3] = { 0.0, };
 	for (int i = 0; i < 3; i++) color[i] = (rand() % 100) / 100.0;
 	drawLabels(0.60f, 0.95f, currMenuOper, color, 1);
 
@@ -184,21 +184,18 @@ void drawEachPoints() {
 }
 
 void drawLabels(float x, float y, int index, float* color, int mod) {	// category index & color information
-	std::string xLabel[11] = {
+	std::string xLabel[39] = {
 		"blueWins",
-		"blueWardsPlaced",
-		"blueWardsDestroyed",
-		"blueTowersDestroyed",
-		"blueKills",
-		"blueDeaths",
-		"blueAssists",
-		"blueTotalExperience",
-		"blueTotalMinionsKilled",
-		"blueExperienceDiff",
-		"blueGoldDiff"
+		"blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
+		"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+		"blueTotalExperience", "blueTotalMinionsKilled", "blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff",
+		"blueCSPerMin", "blueGoldPerMin",
+		"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
+		"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redTotalGold", "redAvgLevel",
+		"redTotalExperience", "redTotalMinionsKilled", "redTotalJungleMinionsKilled", "redGoldDiff", "redExperienceDiff",
+		"redCSPerMin", "redGoldPerMin"
 	};
 
-	
 	std::string label;
 	if (mod)
 		label = xLabel[category[index]];	// mod 1 is X-label
@@ -238,7 +235,7 @@ void inputData(std::vector<std::vector<double>> x, std::vector<double> y) {
 			transposeX[j].push_back(x[i][j]);
 		}
 	}
-	
+
 	for (int i = 0; i < transposeX.size(); i++) {
 		std::vector<double> px = vectorNormalization(transposeX[i]);
 		std::vector<Point> tmpPoint;
@@ -248,7 +245,7 @@ void inputData(std::vector<std::vector<double>> x, std::vector<double> y) {
 		}
 		eachDataInfo.push_back(tmpPoint);
 	}
-	
+
 }
 
 bool cmp(Point a, Point b) {
@@ -296,7 +293,7 @@ std::vector<std::vector<double>> vectorNormalization(std::vector<std::vector<dou
 			if (minV > val) minV = val;
 		}
 	}
-	
+
 	// Normalize all elements of vector
 	std::vector<std::vector<double>> normal;
 	double t;
@@ -306,7 +303,7 @@ std::vector<std::vector<double>> vectorNormalization(std::vector<std::vector<dou
 		for (int j = 0; j < v[i].size(); j++) {
 			t = (v[i][j] - minV) / (double)(maxV - minV);
 			// resize to fit window size 
-			tmp.push_back(2.0f * t - 0.92f);				
+			tmp.push_back(2.0f * t - 0.92f);
 		}
 		normal.push_back(tmp);
 	}
@@ -315,7 +312,7 @@ std::vector<std::vector<double>> vectorNormalization(std::vector<std::vector<dou
 }
 
 // Take category information to OpenGL
-void getCategory(int* c, int size) { 
+void getCategory(int* c, int size) {
 	for (int i = 0; i < size; i++) {
 		category.push_back(c[i] - 1);
 	}
@@ -323,18 +320,16 @@ void getCategory(int* c, int size) {
 
 /* Menu */
 void menu() {
-	std::string xLabel[11] = {
+	std::string xLabel[39] = {
 		"blueWins",
-		"blueWardsPlaced",
-		"blueWardsDestroyed",
-		"blueTowersDestroyed",
-		"blueKills",
-		"blueDeaths",
-		"blueAssists",
-		"blueTotalExperience",
-		"blueTotalMinionsKilled",
-		"blueExperienceDiff",
-		"blueGoldDiff"
+		"blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
+		"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
+		"blueTotalExperience", "blueTotalMinionsKilled", "blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff",
+		"blueCSPerMin", "blueGoldPerMin",
+		"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
+		"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redTotalGold", "redAvgLevel",
+		"redTotalExperience", "redTotalMinionsKilled", "redTotalJungleMinionsKilled", "redGoldDiff", "redExperienceDiff",
+		"redCSPerMin", "redGoldPerMin"
 	};
 
 	// Add menu list including the name of x-data
