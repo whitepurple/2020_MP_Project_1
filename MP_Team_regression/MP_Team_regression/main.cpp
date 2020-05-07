@@ -29,7 +29,7 @@ int currMenuOper;									// menu operation number
 double calMF(std::vector<double> &x, std::vector<double> &coeff) {
 	double ret = coeff[0];
 	for (int i = 0; i < x.size(); ++i) {
-		ret += x[i] * coeff[i + (int)1];
+		ret += x[i] * coeff[i + 1];
 	}
 	return ret;
 }

@@ -54,29 +54,32 @@ bool MultipleRegression<TYPE>::fitIt(
 	// B = normal augmented matrix that stores the equations.
 	std::vector<std::vector<TYPE> > B(np1, std::vector<TYPE>(np2, 0));
 
-	//0차, 1차 sigma
+	//0차, 1차 sigma (a_i, b_i, ...)
 	X[0][0] = (double)N;
 	for (int i = 1; i < np1; i++)
 		for (int k = 0; k < N; ++k) 
 			X[0][i] += (TYPE)x[k][i - 1];
 
-	//2차 sigma
+	//2차 sigma (a_i * b_i ...)
 	for (int i = 0; i < n; ++i) 
 		for (int j = i; j < n; ++j) 
 			for (int k = 0; k < N; ++k) 
 					X[i+1][(j+1)] += (TYPE)(x[k][i] * x[k][j]);
 
+	//계산된 X값들로 B행렬 생성
+	for (int i = 0; i < np1; ++i) {
+		for (int j = 0; j < np1; ++j) {
+			B[i][j] = (i <= j) ? X[i][j]: X[j][i];
+		}
+	}
+
+	//Y 벡터 생성
 	for (int i = 0; i < np1; ++i) {
 		for (int j = 0; j < N; ++j) {
 			Y[i] += (TYPE)((i==0)?1:x[j][i-1])*y[j];
 		}
 	}
 
-	for (int i = 0; i < np1; ++i) {
-		for (int j = 0; j < np1; ++j) {
-			B[i][j] = (i <= j) ? X[i][j]: X[j][i];
-		}
-	}
 
 	// Load values of Y as last column of B
 	for (int i = 0; i <= n; ++i)
