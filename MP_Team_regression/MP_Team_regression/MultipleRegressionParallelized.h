@@ -36,14 +36,14 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	const std::vector<TYPE> & y,
 	std::vector<TYPE> &       coeffs)
 {
-	DS_timer timer(7);
-	timer.setTimerName(0, (char*)"test0");
-	timer.setTimerName(1, (char*)"test1");
-	timer.setTimerName(2, (char*)"test2");
-	timer.setTimerName(3, (char*)"test3");
-	timer.setTimerName(4, (char*)"test4");
-	timer.setTimerName(5, (char*)"test5");
-	timer.setTimerName(6, (char*)"test6");
+	//DS_timer timer(7);
+	//timer.setTimerName(0, (char*)"test0");
+	//timer.setTimerName(1, (char*)"test1");
+	//timer.setTimerName(2, (char*)"test2");
+	//timer.setTimerName(3, (char*)"test3");
+	//timer.setTimerName(4, (char*)"test4");
+	//timer.setTimerName(5, (char*)"test5");
+	//timer.setTimerName(6, (char*)"test6");
 
 
 	// The size of xValues and yValues should be same
@@ -70,40 +70,29 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	// B = normal augmented matrix that stores the equations.
 	std::vector<std::vector<TYPE> > B(np1, std::vector<TYPE>(np2*cache, 0));
 
-	//0차, 1차 sigma
+	TYPE t = 0;
+	TYPE t2, t3, t4, t5, t6, t7, t8;
+	TYPE ta, tb;
+
 	X[0][0] = (TYPE)N;
 
-	TYPE t = 0;
-
-	timer.onTimer(0);
-	for (int i = 1; i < np1; i++) {
-		t = 0;
-		#pragma omp parallel for reduction(+: t)
+	//timer.onTimer(2);
+	for (int i = 0; i < np1; i++) {
+		//0차, 1차 sigma, Y
+		ta = tb = 0;
+		#pragma omp parallel for reduction(+: ta, tb) num_threads(NUMTHREADS)
 		for (int k = 0; k < N; ++k) {
-			t += (TYPE)x[k][i - 1];
+			if (i != 0) ta += (TYPE)x[k][i - 1];
+			tb += (TYPE)((i == 0) ? 1 : x[k][i - 1]) * y[k];
 		}
-		X[0][i * cache] = t;
-	}
-	timer.offTimer(0);
-
-	timer.onTimer(1);
-	for (int i = 0; i < np1; ++i) {
-		t = 0;
-		#pragma omp parallel for reduction(+: t)
-		for (int k = 0; k < N; ++k) {
-			t += (TYPE)((i == 0) ? 1 : x[k][i - 1]) * y[k];
-		}
-		Y[i * cache] = t;
-	}
-	timer.offTimer(1);
-
-	//2차 sigma
-	TYPE t2, t3, t4, t5, t6, t7, t8;
-	timer.onTimer(2);
-	for (int i = 1; i < np1; i++) {
+		if (i != 0) X[0][i * cache] = ta;
+		Y[i * cache] = tb;
+		
+		//2차 sigma
+		if(i != 0)
 		for (int j = i; j < np1; j+=8) {
 			t = t2 = t3 = t4 = t5 = t6 = t7 = t8 = 0;
-			#pragma omp parallel for reduction(+: t, t2, t3, t4, t5, t6, t7, t8)
+			#pragma omp parallel for reduction(+: t, t2, t3, t4, t5, t6, t7, t8) num_threads(NUMTHREADS)
 			for (int k = 0; k < N; k++) {
 				t += (TYPE)(x[k][i - 1] * x[k][j - 1]);
 				if (j + 1 < np1) t2 += (TYPE)(x[k][i - 1] * x[k][j]);
@@ -124,10 +113,10 @@ bool MultipleRegressionP<TYPE>::fitIt(
 			if (j + 7 < np1) X[i][(j + 7) * cache] = t8;
 		}
 	}
-	timer.offTimer(2);
+	//timer.offTimer(2);
 
-	timer.onTimer(3);
-	#pragma omp parallel for schedule(dynamic)
+	//timer.onTimer(3);
+	#pragma omp parallel for num_threads(NUMTHREADS)
 	for (int i = 0; i < np1; ++i) {
 		for (int j = 0; j < np1; ++j) {
 			B[i][j * cache] = (i <= j) ? X[i][j * cache] : X[j][i * cache];
@@ -135,14 +124,14 @@ bool MultipleRegressionP<TYPE>::fitIt(
 		// Load values of Y as last column of B
 		B[i][np1 * cache] = Y[i * cache];
 	}
-	timer.offTimer(3);
+	//timer.offTimer(3);
 
 	n += 1;
 	int nm1 = n - 1;
 
 	TYPE* tmp = NULL;
 
-	timer.onTimer(4);
+	//timer.onTimer(4);
 	//병렬화 불가
 	// Pivotisation of the B matrix.
 	for (int i = 0; i < n; ++i)
@@ -150,41 +139,41 @@ bool MultipleRegressionP<TYPE>::fitIt(
 			if (B[i][i * cache] < B[k][i * cache]) {
 				B[i].swap(B[k]);
 			}
-	timer.offTimer(4);
+	//timer.offTimer(4);
 	
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
-	timer.onTimer(5);
+	//timer.onTimer(5);
 	for (int i = 0; i < nm1; ++i) {
 		TYPE bii = B[i][i * cache];
-		#pragma omp parallel for
+		#pragma omp parallel for num_threads(NUMTHREADS)
 		for (int k = i + 1; k < n; ++k) {
 			for (int j = 0; j < np1; ++j) {
 				B[k][j * cache] -= (B[i][j * cache] * B[k][i * cache]) / bii;         // (1)
 			}
 		}
 	}
-	timer.offTimer(5);
+	//timer.offTimer(5);
 	// Back substitution.
 	// (1) Set the variable as the rhs of last equation
 	// (2) Subtract all lhs values except the target coefficient.
 	// (3) Divide rhs by coefficient of variable being calculated.
 
-	timer.onTimer(6);
+	//timer.onTimer(6);
 	for (int i = nm1; i >= 0; --i) {
 		TYPE reduc = B[i][n*cache];                   // (1)
-		#pragma omp parallel for reduction(-:reduc) 
+		#pragma omp parallel for reduction(-:reduc) num_threads(NUMTHREADS)
 		for (int j = 0; j < n; ++j)
 			if (j != i)
 				reduc -= B[i][j*cache] * a[j*cache];       // (2)
 		a[i*cache] = reduc / B[i][i*cache];		// (3)
 	}
-	timer.offTimer(6);
-	timer.printTimer();
+	//timer.offTimer(6);
+	//timer.printTimer();
 
 	coeffs.resize(np1);		//계수 출력
-	#pragma omp parallel for
+	#pragma omp parallel for num_threads(NUMTHREADS)
 	for (int i = 0; i < np1; ++i)
 		coeffs[i] = a[i*cache];
 

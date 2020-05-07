@@ -141,6 +141,7 @@ int main(int argc, char** argv) {
 	// Multiple Regression
 	printf("\n[ Multiple Regression on Progress... ]\n");
 	timer.onTimer(0);
+
 	mr.fitIt(dataX, dataY, coeffs);
 	timer.offTimer(0);
 	printf("Completed function: f(x) = %f", coeffs[0]);

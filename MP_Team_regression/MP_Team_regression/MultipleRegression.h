@@ -61,6 +61,7 @@ bool MultipleRegression<TYPE>::fitIt(
 			X[0][i] += (TYPE)x[k][i - 1];
 
 	//2Â÷ sigma (a_i * b_i ...)
+
 	for (int i = 0; i < n; ++i) 
 		for (int j = i; j < n; ++j) 
 			for (int k = 0; k < N; ++k) 

@@ -275,7 +275,7 @@ std::vector<double> vectorNormalization(std::vector<double> v) {
 
 	for (auto val : v) {
 		double t = (val - minV) / (double)(maxV - minV);
-		tmp.push_back(2.0f * t - 0.92f);
+		tmp.push_back(1.8f * t - 0.92f);
 	}
 
 	return tmp;
