@@ -69,6 +69,10 @@ void dataVisualization() {
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
 	}
 
+	// 4) y-Label
+	float tmpColor[3] = { 0.0f, 0.0f, 0.0f };
+	drawLabels(-0.95f, 0.95f, yStats - 1, tmpColor, 0);
+
 	glutSwapBuffers();
 	glFlush();
 }
@@ -85,6 +89,10 @@ void eachDataVisualization() {
 
 	// 2) Draw all points of data
 	drawEachPoints();
+
+	// 3) y-Label
+	float tmpColor[3] = { 0.0f, 0.0f, 0.0f };
+	drawLabels(-0.95f, 0.95f, yStats - 1, tmpColor, 0);
 
 	glutSwapBuffers();
 	glFlush();
@@ -124,6 +132,8 @@ void drawTotalPoints() {
 	// Setting Colors
 	for (int i = 0; i < category.size(); i++) {
 		std::vector<float> tmp;
+
+		// For randomizing the color by category to distinguish
 		for (int i = 0; i < 3; i++) {
 			tmp.push_back((rand() % 100) / 100.0);
 		}
@@ -132,14 +142,13 @@ void drawTotalPoints() {
 		float color[3] = { colors[i][0], colors[i][1], colors[i][2] };
 
 		// Print Labels
-		drawLabels(0.6f, y, i, color);
+		drawLabels(0.6f, y, i, color, 1);
 		y -= 0.05f;
 	}
 	
 	// Draw points of data
 	glBegin(GL_POINTS);
 	for (auto data : dataInfo) {
-		// For randomizing the color by category to distinguish
 		if (curCategory < data.getCategory()) 
 			curCategory++;
 
@@ -160,11 +169,12 @@ void drawEachPoints() {
 	// Size of point
 	glPointSize(4.0f);
 
-	float color[3] = { 0.0, };		// color Info
+	// Label
+	float color[3] = { 0.0, };		
+	for (int i = 0; i < 3; i++) color[i] = (rand() % 100) / 100.0;
+	drawLabels(0.60f, 0.95f, currMenuOper, color, 1);
 
 	// Draw points of data
-	for (int i = 0; i < 3; i++) color[i] = (rand() % 100) / 100.0;
-	drawLabels(0.60f, 0.95f, currMenuOper, color);
 	glBegin(GL_POINTS);
 	for (auto data : eachDataInfo[currMenuOper]) {
 		glColor3f(color[0], color[1], color[2]);
@@ -173,20 +183,27 @@ void drawEachPoints() {
 	glEnd();
 }
 
-void drawLabels(float x, float y, int index, float* color) {	// category index & color information
-	std::string xLabel[40] = {
+void drawLabels(float x, float y, int index, float* color, int mod) {	// category index & color information
+	std::string xLabel[11] = {
 		"blueWins",
-		"blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
-		"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
-		"blueTotalExperience", "blueTotalMinionsKilled", "blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff",
-		"blueCSPerMin", "blueGoldPerMin",
-		"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
-		"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redTotalGold", "redAvgLevel",
-		"redTotalExperience", "redTotalMinionsKilled", "redTotalJungleMinionsKilled", "redGoldDiff", "redExperienceDiff",
-		"redCSPerMin", "redGoldPerMin"
+		"blueWardsPlaced",
+		"blueWardsDestroyed",
+		"blueTowersDestroyed",
+		"blueKills",
+		"blueDeaths",
+		"blueAssists",
+		"blueTotalExperience",
+		"blueTotalMinionsKilled",
+		"blueExperienceDiff",
+		"blueGoldDiff"
 	};
 
-	std::string label = xLabel[category[index]];
+	
+	std::string label;
+	if (mod)
+		label = xLabel[category[index]];	// mod 1 is X-label
+	else
+		label = xLabel[index];				// mod 0 is Y-label
 
 	glColor3f(color[0], color[1], color[2]);
 	glRasterPos3f(x, y, -0.1f);
@@ -239,7 +256,7 @@ bool cmp(Point a, Point b) {
 	else return true;
 }
 
-// 1D-vector version - for Y vector 
+// 1D-vector version - for Y vector or each X vector
 // Make value of vector between 0.0 and 1.0
 std::vector<double> vectorNormalization(std::vector<double> v) {
 	double maxV = 0;
@@ -267,7 +284,7 @@ std::vector<double> vectorNormalization(std::vector<double> v) {
 	return tmp;
 }
 
-// 2D-vector version - for X vector
+// 2D-vector version - for all X vector
 std::vector<std::vector<double>> vectorNormalization(std::vector<std::vector<double>> v) {
 	double maxV = 0;
 	double minV = DBL_MAX;
@@ -288,7 +305,8 @@ std::vector<std::vector<double>> vectorNormalization(std::vector<std::vector<dou
 		std::vector<double> tmp;
 		for (int j = 0; j < v[i].size(); j++) {
 			t = (v[i][j] - minV) / (double)(maxV - minV);
-			tmp.push_back(2.0f * t - 0.92f);
+			// resize to fit window size 
+			tmp.push_back(2.0f * t - 0.92f);				
 		}
 		normal.push_back(tmp);
 	}
@@ -305,36 +323,40 @@ void getCategory(int* c, int size) {
 
 /* Menu */
 void menu() {
-	std::string xLabel[40] = {
+	std::string xLabel[11] = {
 		"blueWins",
-		"blueWardsPlaced", "blueWardsDestroyed", "blueFirstBlood", "blueKills", "blueDeaths", "blueAssists",
-		"blueEliteMonsters", "blueDragons", "blueHeralds", "blueTowersDestroyed", "blueTotalGold", "blueAvgLevel",
-		"blueTotalExperience", "blueTotalMinionsKilled", "blueTotalJungleMinionsKilled", "blueGoldDiff", "blueExperienceDiff",
-		"blueCSPerMin", "blueGoldPerMin",
-		"redWardsPlaced", "redWardsDestroyed", "redFirstBlood", "redKills", "redDeaths", "redAssists",
-		"redEliteMonsters", "redDragons", "redHeralds", "redTowersDestroyed", "redTotalGold", "redAvgLevel",
-		"redTotalExperience", "redTotalMinionsKilled", "redTotalJungleMinionsKilled", "redGoldDiff", "redExperienceDiff",
-		"redCSPerMin", "redGoldPerMin"
+		"blueWardsPlaced",
+		"blueWardsDestroyed",
+		"blueTowersDestroyed",
+		"blueKills",
+		"blueDeaths",
+		"blueAssists",
+		"blueTotalExperience",
+		"blueTotalMinionsKilled",
+		"blueExperienceDiff",
+		"blueGoldDiff"
 	};
 
+	// Add menu list including the name of x-data
 	int i;
 	glutCreateMenu(menuOperator);
 	for (i = 0; i < category.size(); i++) {
 		glutAddMenuEntry(xLabel[category[i]].c_str(), i);
 	}
+
 	glutAddMenuEntry("All", i);
 	glutAddMenuEntry("Exit", i + 1);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);	// Show menu when right click 
 }
 
 void menuOperator(int oper) {
-	if (oper == category.size()) {
+	if (oper == category.size()) {				// Show all data
 		glutDisplayFunc(dataVisualization);
 	}
-	else if (oper == category.size() + 1) {
+	else if (oper == category.size() + 1) {		// Exit data visualization
 		glutLeaveMainLoop();
 	}
-	else {
+	else {										// Show each data
 		currMenuOper = oper;
 		glutDisplayFunc(eachDataVisualization);
 	}

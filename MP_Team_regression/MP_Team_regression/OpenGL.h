@@ -42,23 +42,20 @@ public:
 	void setX(float x);
 	void setY(float y);
 	void setCoordinate(std::pair<float, float> c);
-
-	// Operator
-
 };
 
 /* Opengl Functions */
 void initGL(int* argc, char** argv);
-void dataVisualization();
-void eachDataVisualization();
-void drawCoordinateSystem();
+void dataVisualization();				// draw all data visualization
+void eachDataVisualization();			// draw each data visualization
+void drawCoordinateSystem();			// draw coordinate system
 void drawTotalPoints();
 void drawEachPoints();
-void drawLabels(float x, float y, int index, float* color);
+void drawLabels(float x, float y, int index, float* color, int mod);
 
 /* Data Contorl */
 void inputData(std::vector<std::vector<double>> x, std::vector<double> y);
-bool cmp(Point a, Point b);
+bool cmp(Point a, Point b);			// for Sorting
 std::vector<double> vectorNormalization(std::vector<double> v);
 std::vector<std::vector<double>> vectorNormalization(std::vector<std::vector<double>> v);
 void getCategory(int* c, int size);
@@ -67,6 +64,7 @@ void getCategory(int* c, int size);
 extern std::vector<Point> dataInfo;
 extern std::vector<std::vector<Point>> eachDataInfo;
 extern std::vector<int> category;
+extern int yStats;
 extern int currMenuOper;
 
 /* Menu */
