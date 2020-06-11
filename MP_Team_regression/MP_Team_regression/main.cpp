@@ -13,7 +13,7 @@
 #define ABS(X) ((X) < 0 ? -(X) : (X))
 #define EPSILON 0.000001
 
-#define numRows			9880
+#define numRows			197580
 #define numRowsVerify	1880	// number of rows to use as a verifier
 #define numStats		39		// number of game stats from dataset
 #define testnum			400
@@ -131,6 +131,7 @@ int main(int argc, char** argv) {
 			verifyY.push_back(stats[selectY - 1]);
 		}
 	}
+	printf("\n\n%d\n\n", counter);
 
 	// Initialize Data Visualization
 	inputData(dataX, dataY);			// Input Data 

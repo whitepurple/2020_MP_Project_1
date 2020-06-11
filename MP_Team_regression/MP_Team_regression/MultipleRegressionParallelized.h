@@ -11,7 +11,6 @@
 
 #include "DS_timer.h"
 
-#define cache 8
 #define NUMTHREADS 8
 
 template <class TYPE>
@@ -62,13 +61,13 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	int np1 = n + 1;		//n plus 1
 	int np2 = n + 2;	//n plus 2
 
-	std::vector<std::vector<TYPE> > X(np1, std::vector<TYPE>(np1*cache, 0));
+	std::vector<std::vector<TYPE> > X(np1, std::vector<TYPE>(np1, 0));
 	// a = vector to store final coefficients.
-	std::vector<TYPE> a(np1*cache);
+	std::vector<TYPE> a(np1);
 	// Y = vector to store values of sigma(xi * yi)
-	std::vector<TYPE> Y(np1*cache, 0);
+	std::vector<TYPE> Y(np1, 0);
 	// B = normal augmented matrix that stores the equations.
-	std::vector<std::vector<TYPE> > B(np1, std::vector<TYPE>(np2*cache, 0));
+	std::vector<std::vector<TYPE> > B(np1, std::vector<TYPE>(np2, 0));
 
 	TYPE t = 0;
 	TYPE t2, t3, t4, t5, t6, t7, t8;
@@ -85,8 +84,8 @@ bool MultipleRegressionP<TYPE>::fitIt(
 			if (i != 0) ta += (TYPE)x[k][i - 1];
 			tb += (TYPE)((i == 0) ? 1 : x[k][i - 1]) * y[k];
 		}
-		if (i != 0) X[0][i * cache] = ta;
-		Y[i * cache] = tb;
+		if (i != 0) X[0][i] = ta;
+		Y[i] = tb;
 		
 		//2차 sigma
 		if(i != 0)
@@ -103,14 +102,14 @@ bool MultipleRegressionP<TYPE>::fitIt(
 				if (j + 6 < np1) t7 += (TYPE)(x[k][i - 1] * x[k][j + 5]);
 				if (j + 7 < np1) t8 += (TYPE)(x[k][i - 1] * x[k][j + 6]);
 			}
-			X[i][j * cache] = t;
-			if (j + 1 < np1) X[i][(j + 1) * cache] = t2;
-			if (j + 2 < np1) X[i][(j + 2) * cache] = t3;
-			if (j + 3 < np1) X[i][(j + 3) * cache] = t4;
-			if (j + 4 < np1) X[i][(j + 4) * cache] = t5;
-			if (j + 5 < np1) X[i][(j + 5) * cache] = t6;
-			if (j + 6 < np1) X[i][(j + 6) * cache] = t7;
-			if (j + 7 < np1) X[i][(j + 7) * cache] = t8;
+			X[i][j ] = t;
+			if (j + 1 < np1) X[i][(j + 1)] = t2;
+			if (j + 2 < np1) X[i][(j + 2)] = t3;
+			if (j + 3 < np1) X[i][(j + 3)] = t4;
+			if (j + 4 < np1) X[i][(j + 4) ] = t5;
+			if (j + 5 < np1) X[i][(j + 5) ] = t6;
+			if (j + 6 < np1) X[i][(j + 6) ] = t7;
+			if (j + 7 < np1) X[i][(j + 7) ] = t8;
 		}
 	}
 	//timer.offTimer(2);
@@ -119,10 +118,10 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	#pragma omp parallel for num_threads(NUMTHREADS)
 	for (int i = 0; i < np1; ++i) {
 		for (int j = 0; j < np1; ++j) {
-			B[i][j * cache] = (i <= j) ? X[i][j * cache] : X[j][i * cache];
+			B[i][j ] = (i <= j) ? X[i][j ] : X[j][i ];
 		}
 		// Load values of Y as last column of B
-		B[i][np1 * cache] = Y[i * cache];
+		B[i][np1 ] = Y[i ];
 	}
 	//timer.offTimer(3);
 
@@ -136,7 +135,7 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	// Pivotisation of the B matrix.
 	for (int i = 0; i < n; ++i)
 		for (int k = i + 1; k < n; ++k)
-			if (B[i][i * cache] < B[k][i * cache]) {
+			if (B[i][i ] < B[k][i ]) {
 				B[i].swap(B[k]);
 			}
 	//timer.offTimer(4);
@@ -146,11 +145,11 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	//     or eliminate the variable.
 	//timer.onTimer(5);
 	for (int i = 0; i < nm1; ++i) {
-		TYPE bii = B[i][i * cache];
+		TYPE bii = B[i][i ];
 		#pragma omp parallel for num_threads(NUMTHREADS)
 		for (int k = i + 1; k < n; ++k) {
 			for (int j = 0; j < np1; ++j) {
-				B[k][j * cache] -= (B[i][j * cache] * B[k][i * cache]) / bii;         // (1)
+				B[k][j ] -= (B[i][j ] * B[k][i ]) / bii;         // (1)
 			}
 		}
 	}
@@ -162,12 +161,12 @@ bool MultipleRegressionP<TYPE>::fitIt(
 
 	//timer.onTimer(6);
 	for (int i = nm1; i >= 0; --i) {
-		TYPE reduc = B[i][n*cache];                   // (1)
+		TYPE reduc = B[i][n];                   // (1)
 		#pragma omp parallel for reduction(-:reduc) num_threads(NUMTHREADS)
 		for (int j = 0; j < n; ++j)
 			if (j != i)
-				reduc -= B[i][j*cache] * a[j*cache];       // (2)
-		a[i*cache] = reduc / B[i][i*cache];		// (3)
+				reduc -= B[i][j] * a[j];       // (2)
+		a[i] = reduc / B[i][i];		// (3)
 	}
 	//timer.offTimer(6);
 	//timer.printTimer();
@@ -175,7 +174,7 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	coeffs.resize(np1);		//계수 출력
 	#pragma omp parallel for num_threads(NUMTHREADS)
 	for (int i = 0; i < np1; ++i)
-		coeffs[i] = a[i*cache];
+		coeffs[i] = a[i];
 
 	return true;
 }
