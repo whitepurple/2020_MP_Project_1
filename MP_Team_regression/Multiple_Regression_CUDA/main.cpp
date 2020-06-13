@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
 	cudaMalloc(&dy, sizeof(double)*numStats*numRows);
 	cudaMemset(dy, 0, sizeof(double)*numStats*numRows);
 
-	for (int i = 0; i < numStats + 2; i++) {
+	for (int i = 0; i < numStats + 1; i++) {
 		cudaMalloc(&matB[i], sizeof(double)*(numStats+2));
 		cudaMemset(matB[i], 0, sizeof(double)*(numStats+2));
 	}
@@ -274,7 +274,7 @@ int main(int argc, char** argv) {
 	cudaFreeHost(hx); cudaFreeHost(hy);
 	cudaFree(dx); cudaFree(dy);
 
-	for (int i = 0; i < numStats + 2; i++) {
+	for (int i = 0; i < numStats + 1; i++) {
 		cudaFree(matB[i]);
 	}
 
