@@ -10,3 +10,5 @@
 #define GRID_TID_3D	(blockIdx.z * (gridDim.y * gridDim.x * NUM_THREAD_IN_BLOCK)) + GRID_TID_2D
 
 #define TID_1D1D (GRID_TID_1D + BLOCK_TID_1D)
+
+#define _id(i, j, rows) ((i)*(rows) + (j))

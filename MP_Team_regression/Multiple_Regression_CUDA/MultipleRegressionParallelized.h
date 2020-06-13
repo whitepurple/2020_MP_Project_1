@@ -163,9 +163,8 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	for (int i = nm1; i >= 0; --i) {
 		TYPE reduc = B[i][n];                   // (1)
 		#pragma omp parallel for reduction(-:reduc) num_threads(NUMTHREADS)
-		for (int j = 0; j < n; ++j)
-			if (j != i)
-				reduc -= B[i][j] * a[j];       // (2)
+		for (int j = i; j < n; ++j)
+			reduc -= B[i][j] * a[j];       // (2)
 		a[i] = reduc / B[i][i];		// (3)
 	}
 	//timer.offTimer(6);

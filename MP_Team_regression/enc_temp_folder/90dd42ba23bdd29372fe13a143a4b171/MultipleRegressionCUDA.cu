@@ -27,7 +27,7 @@ __global__ void first(double *_x, double *_y, int cols, double** B)
 	
 	printf("[%d, %d][%f, %f]\n", bCol, bRow, bSum, ySum);
 	B[bRow][bCol] = bSum;
-	printf("asd\n");	//여기로 안넘어감.. 
+	printf("asd\n");
 	if (bCol == 0)
 		B[bRow][cols+1] = ySum;
 	printf("zxcv\n");
