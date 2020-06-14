@@ -1,9 +1,12 @@
 #include "kernelCall.h"
 
 #define HEIGHT 40
+#define _id(y, x, cols) ((y)*(cols)+(x))
 
-__global__ void first(double *_x, double *_y, int cols, double** B)
+__global__ void first(double *_x, double *_y, int cols, double* B)
 {
+	int cp1 = cols + 1;
+	int cp2 = cols + 2;
 	int bCol  = threadIdx.x;
 	int bRow = threadIdx.y;
 
@@ -12,42 +15,33 @@ __global__ void first(double *_x, double *_y, int cols, double** B)
 	double x1, x2;
 	//__shared__ float subX[numStats]{1};
 
+	int bRowm1 = bRow - 1;
+	int bColm1 = bCol - 1;
+
 	for (int i = 0; i < numRowsInput; i++) {
 		////make B
 		//if (bCol == 0) subX[bRow + 1] = _x[i * cols + bRow];
 		//__syncthreads();
 		//bSum += subX[bRow] * subX[bCol];
-		x1 = (bRow == 0) ? 1 : _x[i * cols + bRow-1];
-		x2 = (bCol == 0) ? 1 : _x[i * cols + bCol-1];
+		x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
+		x2 = (bCol == 0) ? 1 : _x[i * cols + bColm1];
 		bSum += x1 * x2;
 
 		////make Y
 		ySum += x1 * _y[i];
 	}
-	
-	printf("[%d, %d][%f, %f]\n", bCol, bRow, bSum, ySum);
-	B[bRow][bCol] = bSum;
-	printf("asd\n");	//여기로 안넘어감.. 
-	if (bCol == 0)
-		B[bRow][cols+1] = ySum;
-	printf("zxcv\n");
-	
+
+	B[_id(bRow, bCol, cp2)] = bSum;
+	printf("[[%d,%d] %f\n", bRow, bCol, bSum);
+
+	if (bCol == 0) {
+		B[_id(bRow, cp1, cp2)] = ySum;
+		printf("[[%d,%d] %f\n", bRow, 2, ySum);
+	}
 	//Summation done
-	//Gaussian elimination start
-	if (bRow != 0 || bCol != 0)
-		return;
-	// Pivotisation of the B matrix.
-	double* tmp;
-	for (int i = 0; i < cols+1; ++i)
-		for (int k = i + 1; k < cols+1; ++k)
-			if (B[i][i] < B[k][i]) {
-				tmp = B[i];
-				B[i] = B[k];
-				B[k] = tmp;
-			}
 }
 
-__global__ void first_1(double *_x, double *_y, int cols, double** B)
+__global__ void first_1(double *_x, double *_y, int cols, double* B)
 {
 	int tID = BLOCK_TID_2D;
 	int bRow = threadIdx.x;
@@ -62,31 +56,54 @@ __global__ void first_1(double *_x, double *_y, int cols, double** B)
 	}
 }
 
-__global__ void second(int cols, double** B, double* coeffs) {
+__global__ void second(int cols, double* B, double* coeffs) {
 	int cp1 = cols + 1;
+	int cp2 = cols + 2;
 	int bCol = threadIdx.x;
 	int bRow = threadIdx.y;
 
-	for (int i = 0; i < cols; ++i) {
-		if(bRow >= i)
-			B[bRow][bCol] -= (B[i][bCol] * B[bRow][i]) / B[i][i];
-		__syncthreads();
+	//Gaussian elimination start
+	// Pivotisation of the B matrix.
+	double tmp;
+	if (bRow == 0) {
+		for (int i = 0; i < cp1; ++i)
+			for (int k = i + 1; k < cp1; ++k) {
+				if (B[_id(i, i, cp2)] < B[_id(k, i, cp2)]) {
+					tmp = B[_id(i, bCol, cp2)];
+					B[_id(i, bCol, cp2)] = B[_id(k, bCol, cp2)];
+					B[_id(k, bCol, cp2)] = tmp;
+				}
+				__syncthreads();
+			}
 	}
+	printf("--%d,%d] %f\n", bRow, bCol, B[_id(bRow, bCol, cp2)]);
+	__syncthreads();
+
+	if (bCol != cols + 1) {
+		for (int i = 0; i < cols; ++i) {
+			if (bRow > i )
+				B[_id(bRow, bCol, cp2)] -= (B[_id(i, bCol, cp2)] * B[_id(bRow, i, cp2)]) / B[_id(i, i, cp2)];
+			printf("%d+%d,%d] %f\n", i, bRow, bCol, B[_id(bRow, bCol, cp2)]);
+			__syncthreads();
+		}
+	}
+	printf("++%d,%d] %f\n", bRow, bCol, B[_id(bRow, bCol, cp2)]);
+	__syncthreads();
 
 	if (bRow != 0 || bCol != 0)
 		return;
 
 	for (int i = cols; i >= 0; --i) {
-		double reduc = B[i][cp1]; 
+		double reduc = B[_id(i, cp1, cp2)];
 		for (int j = i; j < cp1; ++j)
-			reduc -= B[i][j] * coeffs[j];
-		coeffs[i] = reduc / B[i][i];
+			reduc -= B[_id(i, j, cp2)] * coeffs[j];
+		coeffs[i] = reduc / B[_id(i, i, cp2)];
 	}
 
 }
 
 
-void kernelCall(double* _x, double* _y, double* _coeffs, int cols, double** B) {
+void kernelCall(double* _x, double* _y, double* _coeffs, int cols, double* B) {
 	//DS_timer timer(3);
 	//timer.setTimerName(0, (char*)"total");
 	//timer.setTimerName(1, (char*)"1");
@@ -103,7 +120,7 @@ void kernelCall(double* _x, double* _y, double* _coeffs, int cols, double** B) {
 	
 	cudaDeviceSynchronize();
 
-	dim3 secondBlock(n, n-1);
+	dim3 secondBlock(n+1, n);
 	second << <1, secondBlock>> > (cols, B, _coeffs);
 
 	cudaDeviceSynchronize();

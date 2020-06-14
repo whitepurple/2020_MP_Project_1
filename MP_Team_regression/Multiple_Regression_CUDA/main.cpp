@@ -132,23 +132,20 @@ int main(int argc, char** argv) {
 	cudaMalloc(&dcoeffsP_2, sizeof(double)*numStats);
 	cudaMemset(dcoeffsP_2, 0, sizeof(double)*numStats);
 
-	double *hx, *hy, *dx, *dy, *matB[numStats + 1];
+	double *hx, *hy, *dx, *dy, *matB;
 
 	cudaMallocHost(&hx, sizeof(double)*numStats*numRows);
 	memset(hx, 0, sizeof(double)*numStats*numRows);
 	cudaMallocHost(&hy, sizeof(double)*numStats*numRows);
 	memset(hy, 0, sizeof(double)*numStats*numRows);
 
-	
 	cudaMalloc(&dx, sizeof(double)*numStats*numRows);
 	cudaMemset(dx, 0, sizeof(double)*numStats*numRows);
 	cudaMalloc(&dy, sizeof(double)*numStats*numRows);
 	cudaMemset(dy, 0, sizeof(double)*numStats*numRows);
 
-	for (int i = 0; i < numStats + 1; i++) {
-		cudaMalloc(&matB[i], sizeof(double)*(numStats+2));
-		cudaMemset(matB[i], 0, sizeof(double)*(numStats+2));
-	}
+	cudaMalloc(&matB, sizeof(double)*(numStats + 1)*(numStats+2));
+	cudaMemset(matB, 0, sizeof(double)*(numStats + 1)*(numStats+2));
 
 	/////////////////////
 	int counter = 0;
@@ -214,12 +211,12 @@ int main(int argc, char** argv) {
 
 	kernelCall(dx, dy, dcoeffsP_2, inptCnt, matB);
 
-	cudaMemcpy(coeffsP_2, dcoeffsP_2, sizeof(double)*inptCnt, cudaMemcpyDeviceToHost);
+	cudaMemcpy(coeffsP_2, dcoeffsP_2, sizeof(double)*numStats, cudaMemcpyDeviceToHost);
 
 	timer.offTimer(2);
 	printf("Completed function: f(x) = %f", coeffsP_2[0]);
 	for (int i = 0; i < inptCnt; ++i)
-		printf(" + %f * x%d", coeffsP_2[i + (int)1], i);
+		printf(" + %f * x%d", coeffsP_2[i + 1], i);
 	printf("\n\n");
 
 	// Verifying results with real dataset
@@ -272,11 +269,7 @@ int main(int argc, char** argv) {
 	pressAny();
 
 	cudaFreeHost(hx); cudaFreeHost(hy);
-	cudaFree(dx); cudaFree(dy);
-
-	for (int i = 0; i < numStats + 1; i++) {
-		cudaFree(matB[i]);
-	}
+	cudaFree(dx); cudaFree(dy); cudaFree(matB);
 
 	return 0;
 }

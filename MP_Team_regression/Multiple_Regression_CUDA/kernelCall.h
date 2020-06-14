@@ -19,4 +19,4 @@
 #define numRowsInput		(numRows - numRowsVerify)
 #define numStats		(39)		// number of game stats from dataset
 
-void kernelCall(double* _x, double* _y, double* _coeffs, int cols, double** B);
+void kernelCall(double* _x, double* _y, double* _coeffs, int cols, double* B);
