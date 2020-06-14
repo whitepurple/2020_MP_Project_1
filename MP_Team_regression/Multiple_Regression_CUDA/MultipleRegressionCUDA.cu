@@ -20,9 +20,6 @@ __global__ void first(double *_x, double *_y, int cols, double* B)
 
 	for (int i = 0; i < numRowsInput; i++) {
 		////make B
-		//if (bCol == 0) subX[bRow + 1] = _x[i * cols + bRow];
-		//__syncthreads();
-		//bSum += subX[bRow] * subX[bCol];
 		x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
 		x2 = (bCol == 0) ? 1 : _x[i * cols + bColm1];
 		bSum += x1 * x2;
@@ -73,7 +70,6 @@ __global__ void second(int cols, double* B, double* coeffs) {
 					B[_id(i, bCol, cp2)] = B[_id(k, bCol, cp2)];
 					B[_id(k, bCol, cp2)] = tmp;
 				}
-				__syncthreads();
 			}
 	}
 	//printf("--%d,%d] %f\n", bRow, bCol, B[_id(bRow, bCol, cp2)]);
@@ -98,8 +94,8 @@ __global__ void second(int cols, double* B, double* coeffs) {
 	for (int i = cols; i >= 0; --i) {
 		double reduc = B[_id(i, cp1, cp2)];
 		for (int j = i; j < cp1; ++j)
-			reduc -= B[_id(i, j, cp2)] * coeffs[j];
-		coeffs[i] = reduc / B[_id(i, i, cp2)];
+			reduc -= ( B[_id(i, j, cp2)]* coeffs[j]);
+		coeffs[i] = (reduc / B[_id(i, i, cp2)]);
 	}
 
 }
@@ -120,7 +116,6 @@ void kernelCall(double* _x, double* _y, double* _coeffs, int cols, double* B) {
 	dim3 firstBlock(n, n);
 	first << <1, firstBlock>> > (_x, _y, cols, B);
 	
-	cudaDeviceSynchronize();
 
 	dim3 secondBlock(n+1, n);
 	second << <1, secondBlock>> > (cols, B, _coeffs);

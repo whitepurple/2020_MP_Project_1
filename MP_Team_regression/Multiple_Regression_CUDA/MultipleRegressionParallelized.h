@@ -139,8 +139,12 @@ bool MultipleRegressionP<TYPE>::fitIt(
 				B[i].swap(B[k]);
 			}
 	//timer.offTimer(4);
-	//LOOP_J_I(np1, np2)
-	//	printf("++%d,%d] %f\n", j, i, B[j][i]);
+
+	int tt = 0;
+	if (tt == 1)
+		LOOP_J_I(np1, np2)
+		printf("++%d,%d] %f\n", j, i, B[j][i]);
+
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
@@ -154,7 +158,10 @@ bool MultipleRegressionP<TYPE>::fitIt(
 			}
 		}
 	}
-
+	int tt2 = 0;
+	if( tt2 == 1)
+	LOOP_J_I(np1, np2)
+		printf("++%d,%d] %f\n", j, i, B[j][i]);
 	//timer.offTimer(5);
 	// Back substitution.
 	// (1) Set the variable as the rhs of last equation
