@@ -139,7 +139,8 @@ bool MultipleRegressionP<TYPE>::fitIt(
 				B[i].swap(B[k]);
 			}
 	//timer.offTimer(4);
-	
+	//LOOP_J_I(np1, np2)
+	//	printf("++%d,%d] %f\n", j, i, B[j][i]);
 	// Performs the Gaussian elimination.
 	// (1) Make all elements below the pivot equals to zero
 	//     or eliminate the variable.
@@ -148,16 +149,19 @@ bool MultipleRegressionP<TYPE>::fitIt(
 		TYPE bii = B[i][i ];
 		#pragma omp parallel for num_threads(NUMTHREADS)
 		for (int k = i + 1; k < n; ++k) {
-			for (int j = 0; j < np1; ++j) {
+			for (int j = 0; j < np2; ++j) {
 				B[k][j ] -= (B[i][j ] * B[k][i ]) / bii;         // (1)
 			}
 		}
 	}
+
 	//timer.offTimer(5);
 	// Back substitution.
 	// (1) Set the variable as the rhs of last equation
 	// (2) Subtract all lhs values except the target coefficient.
 	// (3) Divide rhs by coefficient of variable being calculated.
+
+
 
 	//timer.onTimer(6);
 	for (int i = nm1; i >= 0; --i) {

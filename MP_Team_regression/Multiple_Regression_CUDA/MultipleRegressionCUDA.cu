@@ -32,11 +32,11 @@ __global__ void first(double *_x, double *_y, int cols, double* B)
 	}
 
 	B[_id(bRow, bCol, cp2)] = bSum;
-	printf("[[%d,%d] %f\n", bRow, bCol, bSum);
+	//printf("[[%d,%d] %f\n", bRow, bCol, bSum);
 
 	if (bCol == 0) {
 		B[_id(bRow, cp1, cp2)] = ySum;
-		printf("[[%d,%d] %f\n", bRow, 2, ySum);
+		//printf("[[%d,%d] %f\n", bRow, cp1, ySum);
 	}
 	//Summation done
 }
@@ -76,18 +76,20 @@ __global__ void second(int cols, double* B, double* coeffs) {
 				__syncthreads();
 			}
 	}
-	printf("--%d,%d] %f\n", bRow, bCol, B[_id(bRow, bCol, cp2)]);
+	//printf("--%d,%d] %f\n", bRow, bCol, B[_id(bRow, bCol, cp2)]);
 	__syncthreads();
 
-	if (bCol != cols + 1) {
+	if (bCol == 0) {
 		for (int i = 0; i < cols; ++i) {
-			if (bRow > i )
-				B[_id(bRow, bCol, cp2)] -= (B[_id(i, bCol, cp2)] * B[_id(bRow, i, cp2)]) / B[_id(i, i, cp2)];
-			printf("%d+%d,%d] %f\n", i, bRow, bCol, B[_id(bRow, bCol, cp2)]);
+			if (bRow > i) {
+				for (int j = 0; j < cp1; ++j) {
+					B[_id(bRow, j, cp2)] -= (B[_id(i, j, cp2)] * B[_id(bRow, i, cp2)]) / B[_id(i, i, cp2)];
+				}
+			}
 			__syncthreads();
 		}
 	}
-	printf("++%d,%d] %f\n", bRow, bCol, B[_id(bRow, bCol, cp2)]);
+	//printf("++%d,%d] %f\n", bRow, bCol, B[_id(bRow, bCol, cp2)]);
 	__syncthreads();
 
 	if (bRow != 0 || bCol != 0)

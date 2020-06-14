@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
 		if (counter++ < numRowsInput) {
 			dataX.push_back(tmp);
 			dataY.push_back(stats[selectY - 1]);
-			hy[counter] = stats[selectY - 1];
+			hy[counter-1] = stats[selectY - 1];
 		}
 		else {
 			verifyX.push_back(tmp);
