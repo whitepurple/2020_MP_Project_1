@@ -122,6 +122,122 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 	}
 }
 
+__global__ void first_yc_atomic(double *_x, double *_y, int cols, double* B, double* res)
+{
+	int cp1 = cols + 1;
+	int cp2 = cols + 2;
+	int bCol = threadIdx.x;
+	int bRow = threadIdx.y;
+
+	double bSum = 0;
+	double ySum = 0;
+	double x1, x2;
+
+	int bRowm1 = bRow - 1;
+	int bColm1 = bCol - 1;
+
+
+	// if use shared memory
+	// size = 8bytes * cols * size < 64KB
+
+	int size = numRowsInput / gridSize;
+	for (int i = size * blockIdx.x; i < size * (blockIdx.x + 1); i++) {
+
+		// 범위를 넘어갈 수 있으므로
+		if (i < numRowsInput) {
+			////make B
+			x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
+			x2 = (bCol == 0) ? 1 : _x[i * cols + bColm1];
+			bSum += x1 * x2;
+
+			////make Y
+			ySum += x1 * _y[i];
+		}
+
+	}
+
+	B[_id(bRow, bCol, cp2)] = bSum;
+	//printf("[[%d,%d] %f\n", bRow, bCol, bSum);
+
+	if (bCol == 0) {
+		B[_id(bRow, cp1, cp2)] = ySum;
+		//printf("[[%d,%d] %f\n", bRow, cp1, ySum);
+	}
+	//Summation done
+
+}
+
+__global__ void first_yc_reduction(double *_x, double *_y, int cols, double* B, double* res)
+{
+	int cp1 = cols + 1;
+	int cp2 = cols + 2;
+	int bCol = threadIdx.x;
+	int bRow = threadIdx.y;
+
+	double bSum = 0;
+	double ySum = 0;
+	double x1, x2;
+
+	int bRowm1 = bRow - 1;
+	int bColm1 = bCol - 1;
+
+
+	// if use shared memory
+	// size = 8bytes * cols * size < 64KB
+
+	int size = numRowsInput / gridSize;
+	for (int i = size * blockIdx.x; i < size * (blockIdx.x + 1); i++) {
+		
+		// 범위를 넘어갈 수 있으므로
+		if (i < numRowsInput) {
+			////make B
+			x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
+			x2 = (bCol == 0) ? 1 : _x[i * cols + bColm1];
+			bSum += x1 * x2;
+
+			////make Y
+			ySum += x1 * _y[i];
+		}
+		
+	}
+
+	res[size * blockIdx.x + _id(bRow, bCol, cp2)] = bSum;
+	//printf("[[%d,%d] %f\n", bRow, bCol, bSum);
+
+	if (bCol == 0) {
+		res[size * blockIdx.x + _id(bRow, cp1, cp2)] = ySum;
+		//printf("[[%d,%d] %f\n", bRow, cp1, ySum);
+	}
+	//Summation done
+
+	int offset = 1;
+	
+	while (offset < gridSize) {
+		if (blockIdx.x % (2 * offset) == 0) {
+			// bSum reduction
+			res[size * blockIdx.x + _id(bRow, bCol, cp2)]
+				+= res[size * (blockIdx.x + offset) + _id(bRow, bCol, cp2)];
+
+			if(bCol == 0) {
+				res[size * blockIdx.x + _id(bRow, cp1, cp2)]
+					+= res[size * (blockIdx.x + offset) + _id(bRow, cp1, cp2)];
+			}
+		}
+
+		__syncthreads();
+		offset *= 2;
+	}
+
+	if (blockIdx.x == 0) {
+		B[_id(bRow, bCol, cp2)] = res[_id(bRow, bCol, cp2)];
+
+		if (bCol == 0) {
+			B[_id(bRow, cp1, cp2)] = res[_id(bRow, cp1, cp2)];
+		}
+	}
+}
+
+
 __global__ void second(int cols, double* B, double* coeffs) {
 	int cp1 = cols + 1;
 	int cp2 = cols + 2;
@@ -173,14 +289,27 @@ void kernelCall(double* _x, double* _y, int cols, double* B, int len) {
 	int n = cols + 1;
 	dim3 firstBlock(n, n);
 	int height = ceil((float)len / NUM_T_IN_BLOCK);
-	//dim3 first_1Grid(n, n, height);
+	dim3 first_1Grid(n, n, height);
 	//timer.onTimer(1);
-	//first_1<< <first_1Grid, NUM_T_IN_BLOCK , 0, stream>> > (_x, _y, cols, B, len);
-	first << <1, firstBlock >> > (_x, _y, cols, B);
+	first_1<< <first_1Grid, NUM_T_IN_BLOCK>> > (_x, _y, cols, B, len);
+	//first << <1, firstBlock >> > (_x, _y, cols, B);
 }
 
 void kernelCall2(double* _coeffs, int cols, double* B) {
 	int n = cols + 1;
 	dim3 secondBlock(n + 1, n);
 	second << <1, secondBlock >> > (cols, B, _coeffs);
+}
+
+void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len) {
+	int n = cols + 1;
+	
+	double *res;
+	cudaMalloc(&res, sizeof(double) * n * (n + 1) * gridSize);
+	cudaMemset(res, 0, sizeof(double) * n * (n + 1) * gridSize);
+
+	dim3 firstBlock(n, n, 1);
+	dim3 firstGrid(gridSize, 1, 1);
+
+	first_reduction <<<firstGrid, firstBlock>>> (_x, _y, cols, B, res);
 }

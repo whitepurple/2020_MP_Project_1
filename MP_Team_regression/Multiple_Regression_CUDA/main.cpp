@@ -148,6 +148,7 @@ int main(int argc, char** argv) {
 	cudaMemset(matB, 0, sizeof(double)*(numStats + 1)*(numStats+2));
 
 	/////////////////////
+	
 	int counter = 0;
 	// blueWins, blueWardsPlaced, blueWardsDestroyed, blueTowersDestroyed, blueKills, blueDeaths, blueAssists, blueTotalExperience, blueTotalMinionsKilled, blueExperienceDiff, blueGoldDiff;
 	double stats[numStats]{};
@@ -210,7 +211,7 @@ int main(int argc, char** argv) {
 	cudaMemcpy(dx, hx, sizeof(double)*inptCnt*numRowsInput, cudaMemcpyHostToDevice);
 	cudaMemcpy(dy, hy, sizeof(double)*numRowsInput, cudaMemcpyHostToDevice);
 
-	kernelCall(dx, dy, inptCnt, matB, numRowsInput);
+	kernelCall_yc(dx, dy, inptCnt, matB, numRowsInput);
 	kernelCall2(dcoeffsP_2, inptCnt, matB);
 
 	cudaDeviceSynchronize();
