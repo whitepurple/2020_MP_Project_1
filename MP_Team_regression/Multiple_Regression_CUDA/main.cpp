@@ -18,7 +18,7 @@
 #define numRowsVerify	(1880)	// number of rows to use as a verifier
 #define numRowsInput		(numRows - numRowsVerify)
 #define numStats		(39)		// number of game stats from dataset
-#define testnum			(400)
+#define testnum			(16)
 
 /* OpenGL */
 std::vector<Point> dataInfo;						// save data information for OpenGL
@@ -104,8 +104,8 @@ int main(int argc, char** argv) {
 	int inpt, inptCnt = 0;
 	while (~scanf("%d", &inpt)) {
 		if (inpt == 100) {	//최대 열 16개에 대하여 테스트
-			for (int i = 0; i < 16; i++) selectX[i] = i + 10;
-			inptCnt += 16;
+			for (int i = 0; i < testnum; i++) selectX[i] = i +2;
+			inptCnt += testnum;
 			break;
 		}
 		else if (inpt == 0) break;
@@ -205,12 +205,15 @@ int main(int argc, char** argv) {
 
 	// Multiple Regression CUDA
 	printf("\n[ Parallelized  CUDA Multiple Regression on Progress... ]\n");
+
 	timer.onTimer(2);
 	cudaMemcpy(dx, hx, sizeof(double)*inptCnt*numRowsInput, cudaMemcpyHostToDevice);
 	cudaMemcpy(dy, hy, sizeof(double)*numRowsInput, cudaMemcpyHostToDevice);
 
-	kernelCall(dx, dy, dcoeffsP_2, inptCnt, matB);
+	kernelCall(dx, dy, inptCnt, matB, numRowsInput);
+	kernelCall2(dcoeffsP_2, inptCnt, matB);
 
+	cudaDeviceSynchronize();
 	cudaMemcpy(coeffsP_2, dcoeffsP_2, sizeof(double)*numStats, cudaMemcpyDeviceToHost);
 
 	timer.offTimer(2);
@@ -253,7 +256,7 @@ int main(int argc, char** argv) {
 		double parallelResult = calMF(verifyX[i], coeffsP);
 		double parallelResult2 = calMF(verifyX[i], coeffsP_2);
 
-		printf(" | Y[%3d](%8.2f) | f(x)=%12.3f (p)f(x)=%12.3f (p2)f(x)=%12.3f\n", i, verifyY[i], serialResult, parallelResult, parallelResult2);
+		printf(" | Y[%3d](%8.2f) | f(x)=%9.6f (p)f(x)=%9.6f (p2)f(x)=%9.6f\n", i, verifyY[i], serialResult, parallelResult, parallelResult2);
 	}
 	printf("\n\n");
 	if (isCorrect)
@@ -262,9 +265,12 @@ int main(int argc, char** argv) {
 		printf("Result Incorrect\n");
 	timer.printTimer();
 	double serialTime = timer.getTimer_ms(0);
-	double parallelTime = timer.getTimer_ms(2);
+	double parallelTime = timer.getTimer_ms(1);
+	double cudaTime = timer.getTimer_ms(2);
 
-	printf("\tx%.2f", serialTime / parallelTime);
+	printf("%18s x%.2f\n", "OpenMP", serialTime / parallelTime);
+	printf("%18s x%.2f\n", "CUDA", serialTime / cudaTime);
+	printf("%18s x%.2f\n","OpenMP/CUDA", parallelTime / cudaTime);
 
 	pressAny();
 

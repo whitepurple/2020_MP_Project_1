@@ -125,6 +125,11 @@ bool MultipleRegressionP<TYPE>::fitIt(
 	}
 	//timer.offTimer(3);
 
+	int tt = 0;
+	if (tt == 1)
+		LOOP_J_I(np1, np2)
+		printf("++%d,%d] %f\n", j, i, B[j][i]);
+
 	n += 1;
 	int nm1 = n - 1;
 
@@ -140,8 +145,8 @@ bool MultipleRegressionP<TYPE>::fitIt(
 			}
 	//timer.offTimer(4);
 
-	int tt = 0;
-	if (tt == 1)
+	int tt1 = 0;
+	if (tt1 == 1)
 		LOOP_J_I(np1, np2)
 		printf("++%d,%d] %f\n", j, i, B[j][i]);
 

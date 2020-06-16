@@ -98,7 +98,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <AdditionalCompilerOptions>-openmp</AdditionalCompilerOptions>
+      <AdditionalCompilerOptions>/openmp</AdditionalCompilerOptions>
       <CodeGeneration>compute_61,sm_61</CodeGeneration>
       <GPUDebugInfo>false</GPUDebugInfo>
     </CudaCompile>
