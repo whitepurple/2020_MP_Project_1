@@ -55,12 +55,10 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 
 	int tID = blockIdx.z*blockDim.x + threadIdx.x;
 
-	__shared__ double localB[NUM_T_IN_BLOCK];
-	__shared__ double localY[NUM_T_IN_BLOCK];
-	localB[BLOCK_TID_1D] = 0;
-	localY[BLOCK_TID_1D] = 0;
+	__shared__ double local[NUM_T_IN_BLOCK];
+	local[BLOCK_TID_1D] = 0;
 
-	if (tID >= _len - 1)
+	if (tID >= _len)
 		return;
 
 	double x1, x2;
@@ -70,56 +68,47 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 
 	////make B
 	x1 = (bRow == 0) ? 1 : _x[tID * cols + bRowm1];
-	x2 = (bCol == 0) ? 1 : _x[tID * cols + bColm1];
-	localB[BLOCK_TID_1D] = x1 * x2;
-
-	////make Y
-	localY[BLOCK_TID_1D] = x1 * _y[tID];
+	x2 = (bCol == 0) ? 1 : ((bCol == cp1) ? _y[tID] : _x[tID * cols + bColm1]);
+	local[BLOCK_TID_1D] = x1 * x2;
 
 	__syncthreads();
 
 	//int offset = NUM_T_IN_BLOCK / 2;
 
+	//if (BLOCK_TID_1D < 512) {
+	//	localB[BLOCK_TID_1D] += localB[BLOCK_TID_1D + 512];
+	//}
+	//__syncthreads();
+
 	//if (BLOCK_TID_1D < 256) {
 	//	localB[BLOCK_TID_1D] += localB[BLOCK_TID_1D + 256];
-	//	localY[BLOCK_TID_1D] += localY[BLOCK_TID_1D + 256];
 	//}
 	//__syncthreads();
 
 	if (BLOCK_TID_1D < 128) {
-		localB[BLOCK_TID_1D] += localB[BLOCK_TID_1D + 128];
-		localY[BLOCK_TID_1D] += localY[BLOCK_TID_1D + 128];
+		local[BLOCK_TID_1D] += local[BLOCK_TID_1D + 128];
 	}
 	__syncthreads();
 
 	if (BLOCK_TID_1D < 64) {
-		localB[BLOCK_TID_1D] += localB[BLOCK_TID_1D + 64];
-		localY[BLOCK_TID_1D] += localY[BLOCK_TID_1D + 64];
+		local[BLOCK_TID_1D] += local[BLOCK_TID_1D + 64];
 	}
 	__syncthreads();
-
-	//while (offset > 32) {
-	//	if (BLOCK_TID_1D < offset) {
-	//		localB[BLOCK_TID_1D] += localB[BLOCK_TID_1D + offset];
-	//		localY[BLOCK_TID_1D] += localY[BLOCK_TID_1D + offset];
-	//	}
-	//	offset /= 2;
-
-	//	__syncthreads();
-	//}
 
 	if (BLOCK_TID_1D < 32) {
-		warpReduce(localB, BLOCK_TID_1D);
-		warpReduce(localY, BLOCK_TID_1D);
+		warpReduce(local, BLOCK_TID_1D);
 	}
-
-	__syncthreads();
 
 	if (threadIdx.x == 0) {
-		atomicAdd(&B[_id(bRow, bCol, cp2)], localB[0]);
-		if (bCol == 0) 
-			atomicAdd(&B[_id(bRow, cp1, cp2)], localY[0]);
+		res[_id(blockIdx.z, _id(bRow, bCol, cp2), (cp1*cp2))] = local[0];
+		
 	}
+
+	if (threadIdx.x == 0) {
+		atomicAdd(&B[_id(bRow, bCol, cp2)], local[0]);
+		//printf("[[%d,%d] %f\n", bRow, bCol, local[0]);
+	}
+	//Summation done
 }
 
 __global__ void second(int cols, double* B, double* coeffs) {
@@ -173,10 +162,17 @@ void kernelCall(double* _x, double* _y, int cols, double* B, int len) {
 	int n = cols + 1;
 	dim3 firstBlock(n, n);
 	int height = ceil((float)len / NUM_T_IN_BLOCK);
-	//dim3 first_1Grid(n, n, height);
+	dim3 first_1Grid(n+1, n, height);
+	double* res;
+	cudaMalloc(&res, sizeof(double)*height*n*(n+1));
+	cudaMemset(res, 0, sizeof(double)*height*n*(n+1));
+	//height = ceil((float)height / NUM_T_IN_BLOCK);
+
 	//timer.onTimer(1);
-	//first_1<< <first_1Grid, NUM_T_IN_BLOCK , 0, stream>> > (_x, _y, cols, B, len);
-	first << <1, firstBlock >> > (_x, _y, cols, B);
+	first_1<< <first_1Grid, NUM_T_IN_BLOCK>> > (_x, _y, cols, B, len);
+	//first << <1, firstBlock >> > (_x, _y, cols, B);
+	cudaDeviceSynchronize();
+	cudaFree(res);
 }
 
 void kernelCall2(double* _coeffs, int cols, double* B) {

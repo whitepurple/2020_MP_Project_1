@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
 	int inpt, inptCnt = 0;
 	while (~scanf("%d", &inpt)) {
 		if (inpt == 100) {	//최대 열 16개에 대하여 테스트
-			for (int i = 0; i < testnum; i++) selectX[i] = i +2;
+			for (int i = 0; i < testnum; i++) selectX[i] = 1+(i +2)%(numStats-1);
 			inptCnt += testnum;
 			break;
 		}
@@ -129,20 +129,20 @@ int main(int argc, char** argv) {
 	double coeffsP_2[numStats]{ 0 };
 
 	double* dcoeffsP_2;		// coefficient for Polynomial Regression
-	cudaMalloc(&dcoeffsP_2, sizeof(double)*numStats);
-	cudaMemset(dcoeffsP_2, 0, sizeof(double)*numStats);
+	cudaMalloc(&dcoeffsP_2, sizeof(double)*(numStats + 1));
+	cudaMemset(dcoeffsP_2, 0, sizeof(double)*(numStats + 1));
 
 	double *hx, *hy, *dx, *dy, *matB;
 
 	cudaMallocHost(&hx, sizeof(double)*numStats*numRows);
 	memset(hx, 0, sizeof(double)*numStats*numRows);
-	cudaMallocHost(&hy, sizeof(double)*numStats*numRows);
-	memset(hy, 0, sizeof(double)*numStats*numRows);
+	cudaMallocHost(&hy, sizeof(double)*numRows);
+	memset(hy, 0, sizeof(double)*numRows);
 
 	cudaMalloc(&dx, sizeof(double)*numStats*numRows);
 	cudaMemset(dx, 0, sizeof(double)*numStats*numRows);
-	cudaMalloc(&dy, sizeof(double)*numStats*numRows);
-	cudaMemset(dy, 0, sizeof(double)*numStats*numRows);
+	cudaMalloc(&dy, sizeof(double)*numRows);
+	cudaMemset(dy, 0, sizeof(double)*numRows);
 
 	cudaMalloc(&matB, sizeof(double)*(numStats + 1)*(numStats+2));
 	cudaMemset(matB, 0, sizeof(double)*(numStats + 1)*(numStats+2));
