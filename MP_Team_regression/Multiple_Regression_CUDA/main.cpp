@@ -2,6 +2,8 @@
 #include <vector>
 #include <stdlib.h>
 #include <numeric>
+#include <math.h>
+
 #include "PolynomialRegression.h"
 #include "CSVReader.h"
 #include "OpenGL.h"
@@ -247,6 +249,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	double sumAbsError[3]{ 0, };
 	for (int i = 0; i < inpt; ++i) {
 		//printf("X[%3d]{", i);
 		//for (double d : verifyX[i])
@@ -257,12 +260,18 @@ int main(int argc, char** argv) {
 		double parallelResult2 = calMF(verifyX[i], coeffsP_2);
 
 		printf(" | Y[%3d](%8.2f) | f(x)=%9.6f (p)f(x)=%9.6f (p2)f(x)=%9.6f\n", i, verifyY[i], serialResult, parallelResult, parallelResult2);
+		sumAbsError[0] += log10(abs(verifyY[i] - serialResult)) / log10(2);
+		sumAbsError[1] += log10(abs(verifyY[i] - parallelResult)) / log10(2);
+		sumAbsError[2] += log10(abs(verifyY[i] - parallelResult2)) / log10(2);
 	}
 	printf("\n\n");
 	if (isCorrect)
 		printf("Result Correct\n");
 	else 
 		printf("Result Incorrect\n");
+	printf("* Average Value of Absolute Error (Logscaled) *\n Serial Algorithm: %.4lf\nParallel Algorithm (OpenMP): %.4lf\nParallel Algrithm (CUDA): %.4lf\n\n",
+		sumAbsError[0] / inpt, sumAbsError[1] / inpt, sumAbsError[2] / inpt);
+
 	timer.printTimer();
 	double serialTime = timer.getTimer_ms(0);
 	double parallelTime = timer.getTimer_ms(1);
