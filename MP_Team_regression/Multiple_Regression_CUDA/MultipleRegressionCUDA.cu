@@ -156,11 +156,11 @@ __global__ void first_yc_atomic(double *_x, double *_y, int cols, double* B, dou
 
 	}
 
-	B[_id(bRow, bCol, cp2)] = bSum;
+	atomicAdd(&B[_id(bRow, bCol, cp2)], bSum);
 	//printf("[[%d,%d] %f\n", bRow, bCol, bSum);
 
 	if (bCol == 0) {
-		B[_id(bRow, cp1, cp2)] = ySum;
+		atomicAdd(&B[_id(bRow, cp1, cp2)], ySum);
 		//printf("[[%d,%d] %f\n", bRow, cp1, ySum);
 	}
 	//Summation done
@@ -311,5 +311,5 @@ void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len) {
 	dim3 firstBlock(n, n, 1);
 	dim3 firstGrid(gridSize, 1, 1);
 
-	first_reduction <<<firstGrid, firstBlock>>> (_x, _y, cols, B, res);
+	first_yc_atomic <<<firstGrid, firstBlock>>> (_x, _y, cols, B, res);
 }
