@@ -1,6 +1,6 @@
 #include "kernelCall.h"
 
-#define NUM_T_IN_BLOCK 256
+#define NUM_T_IN_BLOCK 512
 
 __global__ void first(double *_x, double *_y, int cols, double* B)
 {
@@ -73,17 +73,15 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 
 	__syncthreads();
 
-	//int offset = NUM_T_IN_BLOCK / 2;
-
 	//if (BLOCK_TID_1D < 512) {
-	//	localB[BLOCK_TID_1D] += localB[BLOCK_TID_1D + 512];
+	//	local[BLOCK_TID_1D] += local[BLOCK_TID_1D + 512];
 	//}
 	//__syncthreads();
 
-	//if (BLOCK_TID_1D < 256) {
-	//	localB[BLOCK_TID_1D] += localB[BLOCK_TID_1D + 256];
-	//}
-	//__syncthreads();
+	if (BLOCK_TID_1D < 256) {
+		local[BLOCK_TID_1D] += local[BLOCK_TID_1D + 256];
+	}
+	__syncthreads();
 
 	if (BLOCK_TID_1D < 128) {
 		local[BLOCK_TID_1D] += local[BLOCK_TID_1D + 128];
@@ -97,11 +95,6 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 
 	if (BLOCK_TID_1D < 32) {
 		warpReduce(local, BLOCK_TID_1D);
-	}
-
-	if (threadIdx.x == 0) {
-		res[_id(blockIdx.z, _id(bRow, bCol, cp2), (cp1*cp2))] = local[0];
-		
 	}
 
 	if (threadIdx.x == 0) {
@@ -160,19 +153,12 @@ __global__ void second(int cols, double* B, double* coeffs) {
 
 void kernelCall(double* _x, double* _y, int cols, double* B, int len) {
 	int n = cols + 1;
-	dim3 firstBlock(n, n);
 	int height = ceil((float)len / NUM_T_IN_BLOCK);
 	dim3 first_1Grid(n+1, n, height);
-	double* res;
-	cudaMalloc(&res, sizeof(double)*height*n*(n+1));
-	cudaMemset(res, 0, sizeof(double)*height*n*(n+1));
 	//height = ceil((float)height / NUM_T_IN_BLOCK);
 
-	//timer.onTimer(1);
 	first_1<< <first_1Grid, NUM_T_IN_BLOCK>> > (_x, _y, cols, B, len);
 	//first << <1, firstBlock >> > (_x, _y, cols, B);
-	cudaDeviceSynchronize();
-	cudaFree(res);
 }
 
 void kernelCall2(double* _coeffs, int cols, double* B) {
