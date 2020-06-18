@@ -147,6 +147,13 @@ int main(int argc, char** argv) {
 	cudaMalloc(&matB, sizeof(double)*(numStats + 1)*(numStats + 2));
 	cudaMemset(matB, 0, sizeof(double)*(numStats + 1)*(numStats + 2));
 
+	// Debug
+	/*
+	double *mB;
+	cudaMalloc(&mB, sizeof(double)*(numStats + 1)*(numStats + 2));
+	cudaMemset(mB, 0, sizeof(double)*(numStats + 1)*(numStats + 2));
+	*/
+
 	/////////////////////
 
 	int counter = 0;

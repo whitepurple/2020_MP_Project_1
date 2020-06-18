@@ -60,7 +60,7 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 	localB[BLOCK_TID_1D] = 0;
 	localY[BLOCK_TID_1D] = 0;
 
-	if (tID >= _len - 1)
+	if (tID >= _len)
 		return;
 
 	double x1, x2;
@@ -122,7 +122,7 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 	}
 }
 
-__global__ void first_segment_atomic(double *_x, double *_y, int cols, double* B, double* res)
+__global__ void first_segment_atomic(double *_x, double *_y, int cols, double* B)
 {
 	int cp1 = cols + 1;
 	int cp2 = cols + 2;
@@ -140,7 +140,7 @@ __global__ void first_segment_atomic(double *_x, double *_y, int cols, double* B
 	// if use shared memory
 	// size = 8bytes * cols * size < 64KB
 
-	int size = numRowsInput / gridSize;
+	int size = (numRowsInput / gridSize) + 1;
 	for (int i = size * blockIdx.x; i < size * (blockIdx.x + 1); i++) {
 
 		// 범위를 넘어갈 수 있으므로
@@ -155,6 +155,8 @@ __global__ void first_segment_atomic(double *_x, double *_y, int cols, double* B
 		}
 
 	}
+
+	//printf("bSum : %lf\n", bSum);
 
 	atomicAdd(&B[_id(bRow, bCol, cp2)], bSum);
 	//printf("[[%d,%d] %f\n", bRow, bCol, bSum);
@@ -181,31 +183,38 @@ __global__ void first_segment_reduction(double *_x, double *_y, int cols, double
 	int bRowm1 = bRow - 1;
 	int bColm1 = bCol - 1;
 
-
 	// gridSize만큼 분리하여 분할 작업 수행
-	int size = numRowsInput / gridSize;
+	int size = (numRowsInput / gridSize) + 1;
+	int i = 0;
 
-	for (int i = size * blockIdx.x; i < size * (blockIdx.x + 1); i++) {
-
+	for (i = size * blockIdx.x; i < size * (blockIdx.x + 1); i++) {
 		// 범위를 넘어갈 수 있으므로
-		if (i < numRowsInput) {
-			////make B
-			x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
-			x2 = (bCol == 0) ? 1 : _x[i * cols + bColm1];
-			bSum += x1 * x2;
+		if (i >= numRowsInput) break;
 
-			////make Y
-			ySum += x1 * _y[i];
-		}
+		////make B
+		x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
+		x2 = (bCol == 0) ? 1 : _x[i * cols + bColm1];
+		bSum += x1 * x2;
 
+		////make Y
+		ySum += x1 * _y[i];
 	}
+
+	__syncthreads();
+
+	/*
+	if (i == numRowsInput) {
+		printf("%d %d\n", numRowsInput, blockIdx.x);
+	}*/
+	
+
+	//printf("bSum : %lf\n", bSum);
 
 	// Global Memory인 res에 각각 저장
 	// 같은 종류끼리 연속적으로 저장하는 인덱싱
 	// 원래 B에 들어가는 공간이 동일한 bSum 끼리 연속적으로 배치
 	res[blockIdx.x + _id(bRow, bCol, cp2) * gridSize] = bSum;
-	
-	//printf("%d\n", blockIdx.x + _id(bRow, bCol, cp2) * gridSize);
+	//printf("%d\n", blockIdx.x + _id(bRow, bCol, cp2) * gridDim.x);
 
 	if (bCol == 0) {
 		res[blockIdx.x + _id(bRow, cp1, cp2) * gridSize] = ySum;
@@ -217,11 +226,11 @@ __global__ void reduction(double* B, double* res) {
 	// 반드시 gridSize가 1024보다 작아야 함
 	int tid = blockDim.x * blockIdx.x + threadIdx.x;
 
-
 	// 여기서 gridSize는 reduction kernel의 blockSize
 	__shared__ double local[gridSize]; // if gridSize : 1024, sMem : 8KB
 
 	local[threadIdx.x] = res[tid];
+	__syncthreads();
 	
 	int offset = 1;
 	while (offset < gridSize) {
@@ -233,7 +242,7 @@ __global__ void reduction(double* B, double* res) {
 
 		offset *= 2;
 	}
-
+	
 	if (threadIdx.x == 0) {
 		B[blockIdx.x] = local[threadIdx.x];
 	}
@@ -312,11 +321,58 @@ void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len) {
 
 	// res에 1111111 2222222 333333 과 같이 저장할 예정
 
-	dim3 firstBlock(n, n, 1);
-	dim3 firstGrid(gridSize, 1, 1);
+	dim3 firstBlock(n, n);
+	
+	// 기백 Version
+	/*
+	int height = ceil((float)len / NUM_T_IN_BLOCK);
+	dim3 first_1Grid(n, n, height);
+	first_1 << <first_1Grid, NUM_T_IN_BLOCK >> > (_x, _y, cols, B, len);
+	*/
 
-	first_segment_reduction << <firstGrid, firstBlock >> > (_x, _y, cols, res);
+	printf("Rows : %d\n", numRowsInput);
+
+	
+	// Reduction Version
+	first_segment_reduction <<<gridSize, firstBlock>>> (_x, _y, cols, res);
 	// Implicit Synchronize
 	reduction <<<n * (n + 1), gridSize >>> (B, res);
 	cudaThreadSynchronize();
+	
+
+	/*
+	// Basic
+	int height = ceil((float)len / NUM_T_IN_BLOCK);
+	dim3 first_1Grid(n, n, height);
+	//timer.onTimer(1);
+	first_1 <<<first_1Grid, NUM_T_IN_BLOCK >> > (_x, _y, cols, mB, len);
+	*/
+
+	// Atomic Version
+	//first_segment_atomic << <gridSize, firstBlock >> > (_x, _y, cols, B);
+
+	
+	// Debug 용
+	/*
+	double *tmpB;
+	tmpB = (double*)malloc(sizeof(double) * n * (n + 1) * gridSize);
+	memset(tmpB, 0, sizeof(double) * n * (n + 1) * gridSize);
+
+	double *tmpB2;
+	tmpB2 = (double*)malloc(sizeof(double) * n * (n + 1) * gridSize);
+	memset(tmpB2, 0, sizeof(double) * n * (n + 1) * gridSize);
+	
+	cudaMemcpy(tmpB, B, sizeof(double) * n * (n + 1), cudaMemcpyDeviceToHost);
+	cudaMemcpy(tmpB2, mB, sizeof(double) * n * (n + 1), cudaMemcpyDeviceToHost);
+
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n + 1; j++) {
+			if (tmpB[i * n + j] != tmpB2[i * n + j]) {
+				printf("id : %d, B : %lf, mB : %lf\n", i * n + j, tmpB[i * n + j], tmpB2[i * n + j]);
+			}
+		}
+	}
+	*/
+
+	cudaFree(res);
 }
