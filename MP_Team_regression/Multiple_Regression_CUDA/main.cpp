@@ -218,27 +218,28 @@ int main(int argc, char** argv) {
 
 	// Multiple Regression CUDA
 	printf("\n[ Parallelized  CUDA Multiple Regression on Progress... ]\n");
-	cudaStream_t stream[NUM_STREAMS];
+	//////////////////////
+	//cudaStream_t stream[NUM_STREAMS];
 
-	LOOP_I(NUM_STREAMS)
-		cudaStreamCreate(&stream[i]);
+	//LOOP_I(NUM_STREAMS)
+	//	cudaStreamCreate(&stream[i]);
 
-	timer.onTimer(2);
-	cudaMemcpy(dx, hx, sizeof(double)*inptCnt*numRowsInput, cudaMemcpyHostToDevice);
-	cudaMemcpy(dy, hy, sizeof(double)*numRowsInput, cudaMemcpyHostToDevice);
-	int cs = numRowsInput / NUM_STREAMS;
-	int xcs = inptCnt * cs;
-	int remainOffset = numRowsInput % NUM_STREAMS;
-	LOOP_I(NUM_STREAMS)
-	{
-		int offset = cs * i;
-		int xoffset = xcs * i;
-		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
-		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
+	//timer.onTimer(2);
+	//cudaMemcpy(dx, hx, sizeof(double)*inptCnt*numRowsInput, cudaMemcpyHostToDevice);
+	//cudaMemcpy(dy, hy, sizeof(double)*numRowsInput, cudaMemcpyHostToDevice);
+	//int cs = numRowsInput / NUM_STREAMS;
+	//int xcs = inptCnt * cs;
+	//int remainOffset = numRowsInput % NUM_STREAMS;
+	//LOOP_I(NUM_STREAMS)
+	//{
+	//	int offset = cs * i;
+	//	int xoffset = xcs * i;
+	//	cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
+	//	cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
 
-		kernelCall(dx + xoffset, dy + offset, inptCnt, matB, cs + ifLastStream(remainOffset), stream[i]);
-	}
-	/////////////////////////
+	//	kernelCall(dx + xoffset, dy + offset, inptCnt, matB, cs + ifLastStream(remainOffset), stream[i]);
+	//}
+	///////////////////////////
 	timer.onTimer(2);
 	cudaMemcpy(dx, hx, sizeof(double)*inptCnt*numRowsInput, cudaMemcpyHostToDevice);
 	cudaMemcpy(dy, hy, sizeof(double)*numRowsInput, cudaMemcpyHostToDevice);
