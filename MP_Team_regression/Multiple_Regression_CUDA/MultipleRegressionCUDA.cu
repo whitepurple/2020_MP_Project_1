@@ -55,7 +55,7 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 
 	int tID = blockIdx.z*blockDim.x + threadIdx.x;
 
-	__shared__ double local[NUM_T_IN_BLOCK];
+	volatile __shared__ double local[NUM_T_IN_BLOCK];
 	local[BLOCK_TID_1D] = 0;
 
 	if (tID >= _len)
@@ -63,12 +63,9 @@ __global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
 
 	double x1, x2;
 
-	int bRowm1 = bRow - 1;
-	int bColm1 = bCol - 1;
-
 	////make B
-	x1 = (bRow == 0) ? 1 : _x[tID * cols + bRowm1];
-	x2 = (bCol == 0) ? 1 : ((bCol == cp1) ? _y[tID] : _x[tID * cols + bColm1]);
+	x1 = ((bRow == 0) ? 1 : _x[tID * cols + bRow - 1]);
+	x2 = ((bCol == 0) ? 1 : ((bCol == cp1) ? _y[tID] : _x[tID * cols + bCol - 1]));
 	local[BLOCK_TID_1D] = x1 * x2;
 
 	__syncthreads();
@@ -151,13 +148,13 @@ __global__ void second(int cols, double* B, double* coeffs) {
 
 //__global__ void first_2(double* B)
 
-void kernelCall(double* _x, double* _y, int cols, double* B, int len) {
+void kernelCall(double* _x, double* _y, int cols, double* B, int len, cudaStream_t stream) {
 	int n = cols + 1;
 	int height = ceil((float)len / NUM_T_IN_BLOCK);
 	dim3 first_1Grid(n+1, n, height);
 	//height = ceil((float)height / NUM_T_IN_BLOCK);
 
-	first_1<< <first_1Grid, NUM_T_IN_BLOCK>> > (_x, _y, cols, B, len);
+	first_1<< <first_1Grid, NUM_T_IN_BLOCK, 0, stream>> > (_x, _y, cols, B, len);
 	//first << <1, firstBlock >> > (_x, _y, cols, B);
 }
 
