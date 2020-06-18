@@ -20,7 +20,7 @@
 #define numStats		(39)						// number of game stats from dataset
 
 // Device Reduction Version Value
-#define gridSize		(500)						// Row Segment Count
+#define gridSize		(50)						// Row Segment Count
 
 // Kernel
 void kernelCall(double* _x, double* _y, int cols, double* B, int len);

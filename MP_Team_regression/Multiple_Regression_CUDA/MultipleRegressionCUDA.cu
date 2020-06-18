@@ -211,10 +211,10 @@ __global__ void first_segment_reduction(double *_x, double *_y, int cols, double
 	// 같은 threadIdx.x, threadIdx.y 끼리 연속적으로 저장하는 인덱싱
 	// 원래 B에 들어가는 공간이 동일한 bSum 끼리 연속적으로 배치
 	// 따라서 각 block의 같은 쓰레드 번호끼리 연속적으로 저장하므로 blockIdx.x가 기준이 된다.
-	atomicAdd( &res[blockIdx.x + _id(bRow, bCol, cp2) * gridSize] , bSum);
+	res[blockIdx.x + _id(bRow, bCol, cp2) * gridSize] += bSum;
 
 	if (bCol == 0) {
-		atomicAdd(&res[blockIdx.x + _id(bRow, cp1, cp2) * gridSize], ySum);
+		res[blockIdx.x + _id(bRow, cp1, cp2) * gridSize] += ySum;
 	}
 	//Summation done
 }
