@@ -169,7 +169,7 @@ __global__ void first_segment_atomic(double *_x, double *_y, int cols, double* B
 
 }
 
-__global__ void first_segment_reduction(double *_x, double *_y, int cols, double* res)
+__global__ void first_segment_reduction(double *_x, double *_y, int cols, double* res, int len)
 {
 	int cp1 = cols + 1;
 	int cp2 = cols + 2;
@@ -184,12 +184,12 @@ __global__ void first_segment_reduction(double *_x, double *_y, int cols, double
 	int bColm1 = bCol - 1;
 
 	// gridSize만큼 분리하여 분할 작업 수행
-	int size = (numRowsInput / gridSize) + 1;
+	int size = (len / gridSize) + 1;
 	int i = 0;
 
 	for (i = size * blockIdx.x; i < size * (blockIdx.x + 1); i++) {
 		// 범위를 넘어갈 수 있으므로
-		if (i >= numRowsInput) break;
+		if (i >= len) break;
 
 		////make B
 		x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
@@ -213,11 +213,11 @@ __global__ void first_segment_reduction(double *_x, double *_y, int cols, double
 	// Global Memory인 res에 각각 저장
 	// 같은 종류끼리 연속적으로 저장하는 인덱싱
 	// 원래 B에 들어가는 공간이 동일한 bSum 끼리 연속적으로 배치
-	res[blockIdx.x + _id(bRow, bCol, cp2) * gridSize] = bSum;
+	atomicAdd( &res[blockIdx.x + _id(bRow, bCol, cp2) * gridSize] , bSum);
 	//printf("%d\n", blockIdx.x + _id(bRow, bCol, cp2) * gridDim.x);
 
 	if (bCol == 0) {
-		res[blockIdx.x + _id(bRow, cp1, cp2) * gridSize] = ySum;
+		atomicAdd(&res[blockIdx.x + _id(bRow, cp1, cp2) * gridSize], ySum);
 	}
 	//Summation done
 }
@@ -312,12 +312,15 @@ void kernelCall2(double* _coeffs, int cols, double* B) {
 	second << <1, secondBlock >> > (cols, B, _coeffs);
 }
 
-void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len) {
+void kernelCall_reduc(int cols, double* B, double* res) {
+	int n = cols + 1;
+	reduction << <n * (n + 1), gridSize >> > (B, res);
+}
+
+void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len, double* res, cudaStream_t stream) {
 	int n = cols + 1;
 
-	double *res;
-	cudaMalloc(&res, sizeof(double) * n * (n + 1) * gridSize);
-	cudaMemset(res, 0, sizeof(double) * n * (n + 1) * gridSize);
+
 
 	// res에 1111111 2222222 333333 과 같이 저장할 예정
 
@@ -330,13 +333,13 @@ void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len) {
 	first_1 << <first_1Grid, NUM_T_IN_BLOCK >> > (_x, _y, cols, B, len);
 	*/
 
-	printf("Rows : %d\n", numRowsInput);
+	//printf("Rows : %d\n", len);
 
 	
 	// Reduction Version
-	first_segment_reduction <<<gridSize, firstBlock>>> (_x, _y, cols, res);
+	first_segment_reduction <<<gridSize, firstBlock, 0, stream>>> (_x, _y, cols, res, len);
 	// Implicit Synchronize
-	reduction <<<n * (n + 1), gridSize >>> (B, res);	
+	//reduction <<<n * (n + 1), gridSize >>> (B, res);	
 
 	/*
 	// Basic
@@ -372,5 +375,4 @@ void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len) {
 	}
 	*/
 
-	cudaFree(res);
 }

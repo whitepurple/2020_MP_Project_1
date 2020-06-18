@@ -20,7 +20,7 @@
 #define numRowsVerify	(1880)		// number of rows to use as a verifier
 #define numRowsInput	(numRows - numRowsVerify)
 #define numStats		(39)		// number of game stats from dataset
-#define testnum			(16)
+#define testnum			(30)
 
 #define NUM_STREAMS 10
 #define ifLastStream(offset) ((i== NUM_STREAMS-1)? offset :0)
@@ -152,12 +152,9 @@ int main(int argc, char** argv) {
 	cudaMalloc(&matB, sizeof(double)*(numStats + 1)*(numStats + 2));
 	cudaMemset(matB, 0, sizeof(double)*(numStats + 1)*(numStats + 2));
 
-	// Debug
-	/*
-	double *mB;
-	cudaMalloc(&mB, sizeof(double)*(numStats + 1)*(numStats + 2));
-	cudaMemset(mB, 0, sizeof(double)*(numStats + 1)*(numStats + 2));
-	*/
+	double *res;
+	cudaMalloc(&res, sizeof(double) *(numStats + 1)*(numStats + 2) * gridSize);
+	cudaMemset(res, 0, sizeof(double) *(numStats + 1)*(numStats + 2)* gridSize);
 
 	/////////////////////
 
@@ -218,35 +215,25 @@ int main(int argc, char** argv) {
 
 	// Multiple Regression CUDA
 	printf("\n[ Parallelized  CUDA Multiple Regression on Progress... ]\n");
-	//////////////////////
-	//cudaStream_t stream[NUM_STREAMS];
+	cudaStream_t stream[NUM_STREAMS];
 
-	//LOOP_I(NUM_STREAMS)
-	//	cudaStreamCreate(&stream[i]);
+	LOOP_I(NUM_STREAMS)
+		cudaStreamCreate(&stream[i]);
 
-	//timer.onTimer(2);
-	//cudaMemcpy(dx, hx, sizeof(double)*inptCnt*numRowsInput, cudaMemcpyHostToDevice);
-	//cudaMemcpy(dy, hy, sizeof(double)*numRowsInput, cudaMemcpyHostToDevice);
-	//int cs = numRowsInput / NUM_STREAMS;
-	//int xcs = inptCnt * cs;
-	//int remainOffset = numRowsInput % NUM_STREAMS;
-	//LOOP_I(NUM_STREAMS)
-	//{
-	//	int offset = cs * i;
-	//	int xoffset = xcs * i;
-	//	cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
-	//	cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
-
-	//	kernelCall(dx + xoffset, dy + offset, inptCnt, matB, cs + ifLastStream(remainOffset), stream[i]);
-	//}
-	///////////////////////////
 	timer.onTimer(2);
-	cudaMemcpy(dx, hx, sizeof(double)*inptCnt*numRowsInput, cudaMemcpyHostToDevice);
-	cudaMemcpy(dy, hy, sizeof(double)*numRowsInput, cudaMemcpyHostToDevice);
-
-	kernelCall_yc(dx, dy, inptCnt, matB, numRowsInput);
+	int cs = numRowsInput / NUM_STREAMS;
+	int xcs = inptCnt * cs;
+	int remainOffset = numRowsInput % NUM_STREAMS;
+	LOOP_I(NUM_STREAMS)
+	{
+		int offset = cs * i;
+		int xoffset = xcs * i;
+		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
+		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
+		kernelCall_yc(dx + xoffset, dy+ offset, inptCnt, matB, cs + ifLastStream(remainOffset), res, stream[i]);
+	}
+	kernelCall_reduc(inptCnt, matB, res);
 	kernelCall2(dcoeffsP_2, inptCnt, matB);
-
 	cudaDeviceSynchronize();
 	cudaMemcpy(coeffsP_2, dcoeffsP_2, sizeof(double)*numStats, cudaMemcpyDeviceToHost);
 
@@ -317,6 +304,10 @@ int main(int argc, char** argv) {
 
 	cudaFreeHost(hx); cudaFreeHost(hy);
 	cudaFree(dx); cudaFree(dy); cudaFree(matB);
+
+	LOOP_I(NUM_STREAMS)
+		cudaStreamDestroy(stream[i]);
+	cudaFree(res);
 
 	return 0;
 }
