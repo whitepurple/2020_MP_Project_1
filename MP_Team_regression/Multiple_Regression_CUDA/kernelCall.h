@@ -19,5 +19,5 @@
 #define numRowsInput		(numRows - numRowsVerify)
 #define numStats		(39)		// number of game stats from dataset
 
-void kernelCall(double* _x, double* _y, int cols, double* B, int len, cudaStream_t stream);
-void kernelCall2(double* _coeffs, int cols, double* B);
+void kernelCall_v1_first(double* _x, double* _y, int cols, double* B, int len, cudaStream_t stream);
+void kernelCall_second(double* _coeffs, int cols, double* B);

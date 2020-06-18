@@ -2,7 +2,7 @@
 
 #define NUM_T_IN_BLOCK 512
 
-__global__ void first(double *_x, double *_y, int cols, double* B)
+__global__ void basefirst(double *_x, double *_y, int cols, double* B)
 {
 	int cp1 = cols + 1;
 	int cp2 = cols + 2;
@@ -46,7 +46,7 @@ __device__ void warpReduce(volatile double* _localVal, int _tid)
 	_localVal[_tid] += _localVal[_tid + 1];
 }
 
-__global__ void first_1(double *_x, double *_y, int cols, double* B, int _len)
+__global__ void first_v1(double *_x, double *_y, int cols, double* B, int _len)
 {
 	int cp1 = cols + 1;
 	int cp2 = cols + 2;
@@ -148,17 +148,17 @@ __global__ void second(int cols, double* B, double* coeffs) {
 
 //__global__ void first_2(double* B)
 
-void kernelCall(double* _x, double* _y, int cols, double* B, int len, cudaStream_t stream) {
+void kernelCall_v1_first(double* _x, double* _y, int cols, double* B, int len, cudaStream_t stream) {
 	int n = cols + 1;
 	int height = ceil((float)len / NUM_T_IN_BLOCK);
 	dim3 first_1Grid(n+1, n, height);
 	//height = ceil((float)height / NUM_T_IN_BLOCK);
 
-	first_1<< <first_1Grid, NUM_T_IN_BLOCK, 0, stream>> > (_x, _y, cols, B, len);
+	first_v1<< <first_1Grid, NUM_T_IN_BLOCK, 0, stream>> > (_x, _y, cols, B, len);
 	//first << <1, firstBlock >> > (_x, _y, cols, B);
 }
 
-void kernelCall2(double* _coeffs, int cols, double* B) {
+void kernelCall_second(double* _coeffs, int cols, double* B) {
 	int n = cols + 1;
 	dim3 secondBlock(n + 1, n);
 	second << <1, secondBlock >> > (cols, B, _coeffs);

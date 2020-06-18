@@ -25,6 +25,9 @@
 #define NUM_STREAMS 10
 #define ifLastStream(offset) ((i== NUM_STREAMS-1)? offset :0)
 
+#define Version_1
+//#define Version_2
+
 /* OpenGL */
 std::vector<Point> dataInfo;						// save data information for OpenGL
 std::vector<std::vector<Point>> eachDataInfo;		// save data when user choose to show each of data visualization
@@ -216,6 +219,7 @@ int main(int argc, char** argv) {
 		cudaStreamCreate(&stream[i]);
 
 	timer.onTimer(2);
+#ifdef Version_1
 	int cs = numRowsInput / NUM_STREAMS;
 	int xcs = inptCnt * cs;
 	int remainOffset = numRowsInput % NUM_STREAMS;
@@ -226,13 +230,14 @@ int main(int argc, char** argv) {
 		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs+ ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
 		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs+ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
 
-		kernelCall(dx + xoffset, dy + offset, inptCnt, matB, cs+ ifLastStream(remainOffset), stream[i]);
+		kernelCall_v1_first(dx + xoffset, dy + offset, inptCnt, matB, cs+ ifLastStream(remainOffset), stream[i]);
 	}
-
-	kernelCall2(dcoeffsP_2, inptCnt, matB);
+	kernelCall_second(dcoeffsP_2, inptCnt, matB);
 
 	cudaDeviceSynchronize();
 	cudaMemcpy(coeffsP_2, dcoeffsP_2, sizeof(double)*numStats, cudaMemcpyDeviceToHost);
+#endif // Version_1
+
 
 	timer.offTimer(2);
 	printf("Completed function: f(x) = %f", coeffsP_2[0]);
