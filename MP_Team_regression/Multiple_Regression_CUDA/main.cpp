@@ -16,17 +16,20 @@
 #define ABS(X) ((X) < 0 ? -(X) : (X))
 #define EPSILON 0.000001
 
-#define numRows			 (197580)  //9880//
-#define numRowsVerify	(1880)	// number of rows to use as a verifier
-#define numRowsInput		(numRows - numRowsVerify)
+#define numRows			(197580)	// 9880//
+#define numRowsVerify	(1880)		// number of rows to use as a verifier
+#define numRowsInput	(numRows - numRowsVerify)
 #define numStats		(39)		// number of game stats from dataset
-#define testnum			(16)
+#define testnum			(30)
 
 #define NUM_STREAMS 10
 #define ifLastStream(offset) ((i== NUM_STREAMS-1)? offset :0)
 
-#define Version_1
-//#define Version_2
+#define NUM_STREAMS 10
+#define ifLastStream(offset) ((i== NUM_STREAMS-1)? offset :0)
+
+//#define Version_1
+#define Version_2
 
 /* OpenGL */
 std::vector<Point> dataInfo;						// save data information for OpenGL
@@ -71,10 +74,10 @@ int main(int argc, char** argv) {
 	MultipleRegression<double> mr;
 	MultipleRegressionP<double> mrp;
 
-	std::vector<double> coeffs(numStats+1, 0);		// coefficient
-	std::vector<double> coeffsP(numStats+1, 0);		// coefficient for Polynomial Regression
+	std::vector<double> coeffs(numStats + 1, 0);		// coefficient
+	std::vector<double> coeffsP(numStats + 1, 0);		// coefficient for Polynomial Regression
 
-	int selectX[numStats]{}, selectY{0};	// statArr to represent user selection
+	int selectX[numStats]{}, selectY{ 0 };	// statArr to represent user selection
 
 	// vector <int> x, y;		// x's for game stats. y's for blueWins
 
@@ -104,11 +107,11 @@ int main(int argc, char** argv) {
 		"redCSPerMin", "redGoldPerMin" };
 	printf("[Available game stats for calculation]\n");
 	printf("[%2d] %-28s\n", 1, statStr[0].c_str());
-	for (int i = 1; i < numStats/2+1; ++i)
-		printf("[%2d] %-28s  [%2d] %-28s\n", i + 1, statStr[i].c_str(), numStats / 2+i + 1, statStr[numStats / 2 + i].c_str());
+	for (int i = 1; i < numStats / 2 + 1; ++i)
+		printf("[%2d] %-28s  [%2d] %-28s\n", i + 1, statStr[i].c_str(), numStats / 2 + i + 1, statStr[numStats / 2 + i].c_str());
 	printf("[100] %-28s\n", "test");
 	printf("\nPlease Select stats by number to include on independent variables(=X) (input '0' to continue) : ");
-	
+
 	int inpt, inptCnt = 0;
 	while (~scanf("%d", &inpt)) {
 		if (inpt == 100) {	//최대 열 16개에 대하여 테스트
@@ -120,7 +123,7 @@ int main(int argc, char** argv) {
 		else if (inpt > 0 && inpt <= numStats) { selectX[inptCnt++] = inpt; }
 		else printf("please select a proper number\n");
 	}
-	
+
 	printf("Now, select ONE stats to be a range set(=Y) : ");
 	while (!selectY && ~scanf("%d", &inpt)) {
 		if (inpt > 0 && inpt <= numStats) { selectY = inpt; }
@@ -128,7 +131,7 @@ int main(int argc, char** argv) {
 	} pressAny();
 
 
-	
+
 	std::vector<std::vector<double>>	dataX{}, verifyX{};	// dataX: game stats as X	verifyX: X factor data for verifying
 	std::vector<double>			dataY{}, verifyY{};	// dataY: Y factor itself	verifyY: ,,, data for verifying
 
@@ -152,17 +155,22 @@ int main(int argc, char** argv) {
 	cudaMalloc(&dy, sizeof(double)*numRows);
 	cudaMemset(dy, 0, sizeof(double)*numRows);
 
-	cudaMalloc(&matB, sizeof(double)*(numStats + 1)*(numStats+2));
-	cudaMemset(matB, 0, sizeof(double)*(numStats + 1)*(numStats+2));
+	cudaMalloc(&matB, sizeof(double)*(numStats + 1)*(numStats + 2));
+	cudaMemset(matB, 0, sizeof(double)*(numStats + 1)*(numStats + 2));
+
+	double *res;
+	cudaMalloc(&res, sizeof(double) *(numStats + 1)*(numStats + 2) * gridSize);
+	cudaMemset(res, 0, sizeof(double) *(numStats + 1)*(numStats + 2)* gridSize);
 
 	/////////////////////
+
 	int counter = 0;
 	// blueWins, blueWardsPlaced, blueWardsDestroyed, blueTowersDestroyed, blueKills, blueDeaths, blueAssists, blueTotalExperience, blueTotalMinionsKilled, blueExperienceDiff, blueGoldDiff;
 	double stats[numStats]{};
 	while (in.read_row(stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8], stats[9],
-		stats[10], stats[11], stats[12], stats[13], stats[14], stats[15], stats[16], stats[17], stats[18], stats[19], 
+		stats[10], stats[11], stats[12], stats[13], stats[14], stats[15], stats[16], stats[17], stats[18], stats[19],
 		stats[20], stats[21], stats[22], stats[23], stats[24], stats[25], stats[26], stats[27], stats[28], stats[29],
-		stats[30], stats[31], stats[32], stats[33], stats[34], stats[35], stats[36], stats[37], stats[38] ) && counter < numRows) {
+		stats[30], stats[31], stats[32], stats[33], stats[34], stats[35], stats[36], stats[37], stats[38]) && counter < numRows) {
 		// Setting independent variables set and result set
 		std::vector<double> tmp;
 		for (int i = 0; i < inptCnt; ++i) {
@@ -171,11 +179,11 @@ int main(int argc, char** argv) {
 			if (counter < numRowsInput)
 				hx[_id(counter, i, inptCnt)] = value;
 		}
-		
+
 		if (counter++ < numRowsInput) {
 			dataX.push_back(tmp);
 			dataY.push_back(stats[selectY - 1]);
-			hy[counter-1] = stats[selectY - 1];
+			hy[counter - 1] = stats[selectY - 1];
 		}
 		else {
 			verifyX.push_back(tmp);
@@ -219,7 +227,8 @@ int main(int argc, char** argv) {
 		cudaStreamCreate(&stream[i]);
 
 	timer.onTimer(2);
-#ifdef Version_1
+
+
 	int cs = numRowsInput / NUM_STREAMS;
 	int xcs = inptCnt * cs;
 	int remainOffset = numRowsInput % NUM_STREAMS;
@@ -227,18 +236,25 @@ int main(int argc, char** argv) {
 	{
 		int offset = cs * i;
 		int xoffset = xcs * i;
+#ifdef Version_1
 		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs+ ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
 		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs+ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
 
 		kernelCall_v1_first(dx + xoffset, dy + offset, inptCnt, matB, cs+ ifLastStream(remainOffset), stream[i]);
 	}
 	kernelCall_second(dcoeffsP_2, inptCnt, matB);
+#endif // Version_1
+#ifdef Version_2
+		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
+		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
+		kernelCall_Segment(dx + xoffset, dy+ offset, inptCnt, cs + ifLastStream(remainOffset), res, stream[i]);
+	}
+	kernelCall_Reduction(inptCnt, matB, res);
+	kernelCall_second(dcoeffsP_2, inptCnt, matB);
+#endif // Version_2
 
 	cudaDeviceSynchronize();
 	cudaMemcpy(coeffsP_2, dcoeffsP_2, sizeof(double)*numStats, cudaMemcpyDeviceToHost);
-#endif // Version_1
-
-
 	timer.offTimer(2);
 	printf("Completed function: f(x) = %f", coeffsP_2[0]);
 	for (int i = 0; i < inptCnt; ++i)
@@ -246,7 +262,7 @@ int main(int argc, char** argv) {
 	printf("\n\n");
 
 	// Verifying results with real dataset
-	printf("\n\n[ Verifying with Dataset ]\n"); 
+	printf("\n\n[ Verifying with Dataset ]\n");
 	printf("How many dataset do you want to verify? : ");
 	while (~scanf("%d", &inpt)) {
 		if (inpt > 0 && inpt < numRowsVerify) break;
@@ -255,13 +271,13 @@ int main(int argc, char** argv) {
 	} pressAny();
 
 	printf("\nGiven Factors were \nX { ");
-	for(int i = 0; i < inptCnt; ++i)
+	for (int i = 0; i < inptCnt; ++i)
 		printf("%s, ", statStr[selectX[i] - 1].c_str());
 	printf("}, \nY { %s }\n\n", statStr[selectY - 1].c_str());
 
 	bool isCorrect = true;
 
-	for (int i = 0; i < inptCnt;i++) {
+	for (int i = 0; i < inptCnt; i++) {
 		if (ABS(coeffs[i] - coeffsP[i]) > EPSILON) {
 			isCorrect = false;
 		}
@@ -288,7 +304,7 @@ int main(int argc, char** argv) {
 	printf("\n\n");
 	if (isCorrect)
 		printf("Result Correct\n");
-	else 
+	else
 		printf("Result Incorrect\n");
 	printf("* Average Value of Absolute Error (Logscaled) *\n Serial Algorithm: %.4lf\nParallel Algorithm (OpenMP): %.4lf\nParallel Algrithm (CUDA): %.4lf\n\n",
 		sumAbsError[0] / inpt, sumAbsError[1] / inpt, sumAbsError[2] / inpt);
@@ -300,7 +316,7 @@ int main(int argc, char** argv) {
 
 	printf("%18s x%.2f\n", "OpenMP", serialTime / parallelTime);
 	printf("%18s x%.2f\n", "CUDA", serialTime / cudaTime);
-	printf("%18s x%.2f\n","OpenMP/CUDA", parallelTime / cudaTime);
+	printf("%18s x%.2f\n", "OpenMP/CUDA", parallelTime / cudaTime);
 
 	pressAny();
 
@@ -308,6 +324,10 @@ int main(int argc, char** argv) {
 	cudaFree(dx); cudaFree(dy); cudaFree(matB);
 	LOOP_I(NUM_STREAMS)
 		cudaStreamDestroy(stream[i]);
+
+	LOOP_I(NUM_STREAMS)
+		cudaStreamDestroy(stream[i]);
+	cudaFree(res);
 
 	return 0;
 }
