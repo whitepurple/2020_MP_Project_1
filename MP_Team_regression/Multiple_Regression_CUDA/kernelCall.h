@@ -14,13 +14,15 @@
 
 #define NUM_BLOCK 256
 
-#define numRows			 (197580)  //9880//
-#define numRowsVerify	(1880)	// number of rows to use as a verifier
-#define numRowsInput		(numRows - numRowsVerify)
-#define numStats		(39)		// number of game stats from dataset
+#define numRows			(197580)					// 9880//
+#define numRowsVerify	(1880)						// number of rows to use as a verifier
+#define numRowsInput	(numRows - numRowsVerify)	// number of rows to use as train
+#define numStats		(39)						// number of game stats from dataset
 
-#define gridSize (500)
+// Device Reduction Version Value
+#define gridSize		(500)						// Row Segment Count
 
+// Kernel
 void kernelCall(double* _x, double* _y, int cols, double* B, int len);
 void kernelCall2(double* _coeffs, int cols, double* B);
 
