@@ -1,6 +1,7 @@
 #pragma once
 #include "device_launch_parameters.h"
 
+// Indexing 
 #define BLOCK_TID_1D	(threadIdx.x)
 #define BLOCK_TID_2D	(blockDim.x * threadIdx.y + BLOCK_TID_1D)
 #define BLOCK_TID_3D	(((blockDim.x * blockDim.y) * threadIdx.z)+ BLOCK_TID_2D)
@@ -11,4 +12,5 @@
 
 #define TID_1D1D (GRID_TID_1D + BLOCK_TID_1D)
 
+// Array Indexing Cal.
 #define _id(i, j, rows) ((i)*(rows) + (j))
