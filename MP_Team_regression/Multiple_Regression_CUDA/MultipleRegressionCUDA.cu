@@ -336,9 +336,7 @@ void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len) {
 	// Reduction Version
 	first_segment_reduction <<<gridSize, firstBlock>>> (_x, _y, cols, res);
 	// Implicit Synchronize
-	reduction <<<n * (n + 1), gridSize >>> (B, res);
-	cudaThreadSynchronize();
-	
+	reduction <<<n * (n + 1), gridSize >>> (B, res);	
 
 	/*
 	// Basic
