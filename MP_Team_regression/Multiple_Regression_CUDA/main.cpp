@@ -232,11 +232,11 @@ int main(int argc, char** argv) {
 	int cs = numRowsInput / NUM_STREAMS;
 	int xcs = inptCnt * cs;
 	int remainOffset = numRowsInput % NUM_STREAMS;
+#ifdef Version_1
 	LOOP_I(NUM_STREAMS)
 	{
 		int offset = cs * i;
 		int xoffset = xcs * i;
-#ifdef Version_1
 		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs+ ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
 		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs+ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
 
@@ -245,6 +245,10 @@ int main(int argc, char** argv) {
 	kernelCall_second(dcoeffsP_2, inptCnt, matB);
 #endif // Version_1
 #ifdef Version_2
+	LOOP_I(NUM_STREAMS)
+	{
+		int offset = cs * i;
+		int xoffset = xcs * i;
 		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
 		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
 		kernelCall_Segment(dx + xoffset, dy+ offset, inptCnt, cs + ifLastStream(remainOffset), res, stream[i]);
