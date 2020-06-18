@@ -26,6 +26,6 @@
 void kernelCall(double* _x, double* _y, int cols, double* B, int len);
 void kernelCall2(double* _coeffs, int cols, double* B);
 
-// addition
-void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len, double *res, cudaStream_t stream);
-void kernelCall_reduc(int cols, double* B, double* res);
+void kernelCall_Segment(double* _x, double* _y, int cols, double* B, int len, double *res, cudaStream_t stream);
+void kernelCall_Reduction(int cols, double* B, double* res);
+void kernelCall_Debug(double* _x, double* _y, int cols, double* B, int len, double *res, cudaStream_t stream);

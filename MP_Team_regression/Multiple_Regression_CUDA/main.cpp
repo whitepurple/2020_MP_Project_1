@@ -230,9 +230,9 @@ int main(int argc, char** argv) {
 		int xoffset = xcs * i;
 		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
 		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
-		kernelCall_yc(dx + xoffset, dy+ offset, inptCnt, matB, cs + ifLastStream(remainOffset), res, stream[i]);
+		kernelCall_Segment(dx + xoffset, dy+ offset, inptCnt, matB, cs + ifLastStream(remainOffset), res, stream[i]);
 	}
-	kernelCall_reduc(inptCnt, matB, res);
+	kernelCall_Reduction(inptCnt, matB, res);
 	kernelCall2(dcoeffsP_2, inptCnt, matB);
 	cudaDeviceSynchronize();
 	cudaMemcpy(coeffsP_2, dcoeffsP_2, sizeof(double)*numStats, cudaMemcpyDeviceToHost);

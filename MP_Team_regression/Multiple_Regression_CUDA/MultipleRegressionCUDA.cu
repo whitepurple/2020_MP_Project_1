@@ -313,20 +313,23 @@ void kernelCall2(double* _coeffs, int cols, double* B) {
 	second << <1, secondBlock >> > (cols, B, _coeffs);
 }
 
+void kernelCall_Segment(double* _x, double* _y, int cols, double* B, int len, double* res, cudaStream_t stream) {
+	int n = cols + 1;
+	dim3 firstBlock(n, n);
+	first_segment_reduction << <gridSize, firstBlock, 0, stream >> > (_x, _y, cols, res, len);
+}
 
-void kernelCall_reduc(int cols, double* B, double* res) {
+void kernelCall_Reduction(int cols, double* B, double* res) {
 	int n = cols + 1;
 	reduction << <n * (n + 1), gridSize >> > (B, res);
 }
 
-void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len, double* res, cudaStream_t stream) {
-	int n = cols + 1;
-
-
+void kernelCall_Debug(double* _x, double* _y, int cols, double* B, int len, double* res, cudaStream_t stream) {
+	//int n = cols + 1;
 
 	// res에 1111111 2222222 333333 과 같이 저장할 예정
 
-	dim3 firstBlock(n, n);
+	//dim3 firstBlock(n, n);
 	
 	// 기백 Version
 	/*
@@ -339,7 +342,7 @@ void kernelCall_yc(double* _x, double* _y, int cols, double* B, int len, double*
 
 	
 	// Reduction Version
-	first_segment_reduction <<<gridSize, firstBlock, 0, stream>>> (_x, _y, cols, res, len);
+	//first_segment_reduction <<<gridSize, firstBlock, 0, stream>>> (_x, _y, cols, res, len);
 	// Implicit Synchronize
 	//reduction <<<n * (n + 1), gridSize >>> (B, res);	
 
