@@ -16,7 +16,7 @@
 #define ABS(X) ((X) < 0 ? -(X) : (X))
 #define EPSILON 0.000001
 
-#define numRows			(40000)	// 9880//
+#define numRows			(197580)	// 9880//
 #define numRowsVerify	(1880)		// number of rows to use as a verifier
 #define numRowsInput	(numRows - numRowsVerify)
 #define numStats		(39)		// number of game stats from dataset
