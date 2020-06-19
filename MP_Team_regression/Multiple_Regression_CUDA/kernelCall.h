@@ -18,12 +18,12 @@
 #define numRowsVerify	(1880)						// number of rows to use as a verifier
 #define numRowsInput	(numRows - numRowsVerify)	// number of rows to use as train
 #define numStats		(39)						// number of game stats from dataset
-#define gridSize		(50)						// Row Segment Count
+#define gridSize		(64)						// Row Segment Count
 
 void kernelCall_v1_first(double* _x, double* _y, int cols, double* B, int len, cudaStream_t stream);
 void kernelCall_second(double* _coeffs, int cols, double* B);
 
 //////////
-void kernelCall_Segment(double* _x, double* _y, int cols, int len, double *res, cudaStream_t stream);
-void kernelCall_Reduction(int cols, double* B, double* res);
-void kernelCall_Debug(double* _x, double* _y, int cols, double* B, int len, double *res, cudaStream_t stream);
+void kernelCall_v2_Segment(double* _x, double* _y, int cols, int len, double *res, cudaStream_t stream);
+void kernelCall_v2_Reduction(int cols, double* B, double* res);
+void kernelCall_v2_Debug(double* _x, double* _y, int cols, double* B, int len, double *res, cudaStream_t stream);

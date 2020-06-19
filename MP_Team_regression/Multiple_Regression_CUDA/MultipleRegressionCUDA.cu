@@ -158,7 +158,6 @@ __global__ void first_segment_reduction(double *_x, double *_y, int cols, double
 	int bRow = threadIdx.y;
 
 	double bSum = 0;
-	double ySum = 0;
 	double x1, x2;
 
 	int bRowm1 = bRow - 1;
@@ -176,25 +175,15 @@ __global__ void first_segment_reduction(double *_x, double *_y, int cols, double
 		if (i >= len) break;
 
 		////make B
-		x1 = (bRow == 0) ? 1 : _x[i * cols + bRowm1];
-		x2 = (bCol == 0) ? 1 : _x[i * cols + bColm1];
+		x1 = ((bRow == 0) ? 1 : _x[i * cols + bRowm1]);
+		x2 = ((bCol == 0) ? 1 : ((bCol == cp1) ? _y[i] : _x[i * cols + bColm1]));
 		bSum += x1 * x2;
-
-		////make Y
-		ySum += x1 * _y[i];
 	}
-
-	__syncthreads();
-
 	// Global Memory인 res에 각각 저장
 	// 같은 threadIdx.x, threadIdx.y 끼리 연속적으로 저장하는 인덱싱
 	// 원래 B에 들어가는 공간이 동일한 bSum 끼리 연속적으로 배치
 	// 따라서 각 block의 같은 쓰레드 번호끼리 연속적으로 저장하므로 blockIdx.x가 기준이 된다.
 	res[blockIdx.x + _id(bRow, bCol, cp2) * gridSize] += bSum;
-
-	if (bCol == 0) {
-		res[blockIdx.x + _id(bRow, cp1, cp2) * gridSize] += ySum;
-	}
 	//Summation done
 }
 
@@ -209,16 +198,20 @@ __global__ void reduction(double* B, double* res) {
 	__syncthreads();
 	
 	// Block마다 Reduction 수행
-	int offset = 1;
-	while (offset < gridSize) {
-		if (threadIdx.x % (2 * offset) == 0) {
-			local[threadIdx.x] += local[threadIdx.x + offset];
-		}
-
-		__syncthreads();
-
-		offset *= 2;
+	//int offset = 1;
+	if (BLOCK_TID_1D < 32) {
+		warpReduce(local, BLOCK_TID_1D);
 	}
+
+	//while (offset < gridSize) {
+	//	if (threadIdx.x % (2 * offset) == 0) {
+	//		local[threadIdx.x] += local[threadIdx.x + offset];
+	//	}
+
+	//	__syncthreads();
+
+	//	offset *= 2;
+	//}
 	
 	// Res는 blockIdx.x 별로 분배되어 있으므로 
 	// Reduction 결과 값이 담긴 각 block당 0번 thread의 값을
@@ -292,18 +285,18 @@ void kernelCall_second(double* _coeffs, int cols, double* B) {
 	second << <1, secondBlock >> > (cols, B, _coeffs);
 }
 
-void kernelCall_Segment(double* _x, double* _y, int cols, int len, double* res, cudaStream_t stream) {
+void kernelCall_v2_Segment(double* _x, double* _y, int cols, int len, double* res, cudaStream_t stream) {
 	int n = cols + 1;
-	dim3 firstBlock(n, n);
+	dim3 firstBlock(n+1, n);
 	first_segment_reduction << <gridSize, firstBlock, 0, stream >> > (_x, _y, cols, res, len);
 }
 
-void kernelCall_Reduction(int cols, double* B, double* res) {
+void kernelCall_v2_Reduction(int cols, double* B, double* res) {
 	int n = cols + 1;
 	reduction << <n * (n + 1), gridSize >> > (B, res);
 }
 
-void kernelCall_Debug(double* _x, double* _y, int cols, double* B, int len, double* res, cudaStream_t stream) {
+void kernelCall_v2_Debug(double* _x, double* _y, int cols, double* B, int len, double* res, cudaStream_t stream) {
 	//int n = cols + 1;
 
 	// res에 1111111 2222222 333333 과 같이 저장할 예정

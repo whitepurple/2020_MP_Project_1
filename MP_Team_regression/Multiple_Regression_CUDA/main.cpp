@@ -16,7 +16,7 @@
 #define ABS(X) ((X) < 0 ? -(X) : (X))
 #define EPSILON 0.000001
 
-#define numRows			(197580)	// 9880//
+#define numRows			(40000)	// 9880//
 #define numRowsVerify	(1880)		// number of rows to use as a verifier
 #define numRowsInput	(numRows - numRowsVerify)
 #define numStats		(39)		// number of game stats from dataset
@@ -251,9 +251,9 @@ int main(int argc, char** argv) {
 		int xoffset = xcs * i;
 		cudaMemcpyAsync(dx + xoffset, hx + xoffset, sizeof(double)*(xcs + ifLastStream(remainOffset*inptCnt)), cudaMemcpyHostToDevice, stream[i]);
 		cudaMemcpyAsync(dy + offset, hy + offset, sizeof(double)*(cs + ifLastStream(remainOffset)), cudaMemcpyHostToDevice, stream[i]);
-		kernelCall_Segment(dx + xoffset, dy+ offset, inptCnt, cs + ifLastStream(remainOffset), res, stream[i]);
+		kernelCall_v2_Segment(dx + xoffset, dy+ offset, inptCnt, cs + ifLastStream(remainOffset), res, stream[i]);
 	}
-	kernelCall_Reduction(inptCnt, matB, res);
+	kernelCall_v2_Reduction(inptCnt, matB, res);
 	kernelCall_second(dcoeffsP_2, inptCnt, matB);
 #endif // Version_2
 
@@ -329,8 +329,6 @@ int main(int argc, char** argv) {
 	LOOP_I(NUM_STREAMS)
 		cudaStreamDestroy(stream[i]);
 
-	LOOP_I(NUM_STREAMS)
-		cudaStreamDestroy(stream[i]);
 	cudaFree(res);
 
 	return 0;
