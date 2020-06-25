@@ -1,2 +1,2 @@
 # 2020_MP_Project_1
-2020_1 Multicore Programming first project using OpenMP
+2020_1 Multicore Programming project using OpenMP and CUDA
